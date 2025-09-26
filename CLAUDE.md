@@ -193,6 +193,24 @@ AGENTS/
 - **"maj"** → Mise à jour documentation selon contexte
 - **"deploy"** → Préparation déploiement avec checks complets
 
+### Méthodologie Déploiement & Automation
+
+**Scripts Intermédiaires Intelligents :**
+- Créer des scripts Python temporaires pour tâches répétitives (ex: fix_imports.py)
+- Automatiser corrections en masse plutôt que éditions manuelles
+- Préférer l'efficacité programmatique aux approches séquentielles
+
+**Documentation Proactive :**
+- DEPLOY_ISSUES.md : Log exhaustif problèmes + solutions
+- Capitaliser sur expérience pour futurs déploiements
+- Patterns reproductibles pour scaling
+
+**Déploiement Render.com :**
+- Python version pinning obligatoire (3.12.7 + .python-version)
+- Versions flexibles requirements.txt (éviter conflits)
+- Imports absolus (pas relatifs) pour structure deployment
+- Build cache clearing pour changements majeurs
+
 ---
 
 > **SCRIBE** - Intelligence artificielle au service de la gestion de connaissances

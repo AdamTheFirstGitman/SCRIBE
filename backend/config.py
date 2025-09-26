@@ -40,12 +40,12 @@ class Settings(BaseSettings):
     # =============================================================================
     SECRET_KEY: str = Field(..., env="SECRET_KEY", min_length=32)
     JWT_SECRET: str = Field(..., env="JWT_SECRET", min_length=32)
-    ALLOWED_HOSTS: List[str] = Field(
-        default=["localhost", "127.0.0.1", "0.0.0.0"],
+    ALLOWED_HOSTS: str = Field(
+        default="localhost,127.0.0.1,0.0.0.0",
         env="ALLOWED_HOSTS"
     )
-    CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000",
         env="CORS_ORIGINS"
     )
 
@@ -141,8 +141,8 @@ class Settings(BaseSettings):
     # FILE PROCESSING
     # =============================================================================
     MAX_UPLOAD_SIZE: int = Field(default=10 * 1024 * 1024, env="MAX_UPLOAD_SIZE")  # 10MB
-    ALLOWED_AUDIO_FORMATS: List[str] = Field(
-        default=["webm", "mp3", "wav", "m4a", "ogg"],
+    ALLOWED_AUDIO_FORMATS: str = Field(
+        default="webm,mp3,wav,m4a,ogg",
         env="ALLOWED_AUDIO_FORMATS"
     )
     AUDIO_PROCESSING_TIMEOUT: int = Field(default=300, env="AUDIO_PROCESSING_TIMEOUT")  # 5 minutes
@@ -176,24 +176,21 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
-                return ["http://localhost:3000", "http://127.0.0.1:3000"]
-            return [origin.strip() for origin in v.split(",")]
+                return "http://localhost:3000,http://127.0.0.1:3000"
         return v
 
     @validator("ALLOWED_HOSTS", pre=True)
     def parse_allowed_hosts(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
-                return ["localhost", "127.0.0.1", "0.0.0.0"]
-            return [host.strip() for host in v.split(",")]
+                return "localhost,127.0.0.1,0.0.0.0"
         return v
 
     @validator("ALLOWED_AUDIO_FORMATS", pre=True)
     def parse_audio_formats(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
-                return ["webm", "mp3", "wav", "m4a", "ogg"]
-            return [format.strip().lower() for format in v.split(",")]
+                return "webm,mp3,wav,m4a,ogg"
         return v
 
     @validator("TEMPERATURE_PLUME", "TEMPERATURE_MIMIR")
@@ -264,6 +261,21 @@ class Settings(BaseSettings):
             "max_tokens": self.MAX_TOKENS_MIMIR,
             "temperature": self.TEMPERATURE_MIMIR,
         }
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """CORS origins as list"""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def allowed_hosts_list(self) -> List[str]:
+        """Allowed hosts as list"""
+        return [host.strip() for host in self.ALLOWED_HOSTS.split(",")]
+
+    @property
+    def allowed_audio_formats_list(self) -> List[str]:
+        """Audio formats as list"""
+        return [fmt.strip().lower() for fmt in self.ALLOWED_AUDIO_FORMATS.split(",")]
 
     class Config:
         env_file = ".env"

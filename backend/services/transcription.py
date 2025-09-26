@@ -27,7 +27,7 @@ class TranscriptionService:
 
     def __init__(self):
         self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.supported_formats = settings.ALLOWED_AUDIO_FORMATS
+        self.supported_formats = settings.allowed_audio_formats_list
         self.max_file_size = 25 * 1024 * 1024  # 25MB Whisper limit
 
     async def transcribe_audio(
