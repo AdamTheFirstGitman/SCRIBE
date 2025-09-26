@@ -51,13 +51,13 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
-  // Use export for Render.com deployment (better compatibility with PWA)
-  output: process.env.NODE_ENV === 'production' ? undefined : undefined,
-  trailingSlash: true,
+  // Use standalone for Render.com deployment (better compatibility)
+  output: 'standalone',
+  trailingSlash: false,
 
-  // Enable image optimization for production
+  // Enable image optimization for production (Render compatible)
   images: {
-    unoptimized: false,
+    unoptimized: process.env.NODE_ENV === 'production',
     domains: ['eytfiohvhlqokikemlfn.supabase.co'],
     formats: ['image/webp', 'image/avif'],
   },
@@ -78,14 +78,14 @@ const nextConfig = {
 
   // TypeScript configuration
   typescript: {
-    // Temporarily allow builds to complete for Render deploy
-    ignoreBuildErrors: process.env.NODE_ENV === 'production',
+    // Allow builds to complete for Render deploy
+    ignoreBuildErrors: false,
   },
 
   // ESLint configuration
   eslint: {
-    // Temporarily ignore ESLint during builds for Render deploy
-    ignoreDuringBuilds: process.env.NODE_ENV === 'production',
+    // Allow ESLint during builds for better code quality
+    ignoreDuringBuilds: false,
     dirs: ['app', 'components', 'lib', 'hooks'],
   },
 
