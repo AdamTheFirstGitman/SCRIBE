@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:render": "NODE_ENV=production next build",
     "start": "next start",
     "export": "next export",
     "lint": "next lint",
@@ -13,7 +14,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "clean": "rm -rf .next out node_modules/.cache"
+    "clean": "rm -rf .next out node_modules/.cache",
+    "debug:components": "node debug-build.js",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
     "@radix-ui/react-switch": "^1.2.6",

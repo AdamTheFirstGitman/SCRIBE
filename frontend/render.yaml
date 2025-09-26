@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: scribe-frontend
+    env: node
+    buildCommand: npm install && npm run build:render
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 18.18.2
+    healthCheckPath: /
+    numInstances: 1
+    plan: starter
+
+# Build settings for Render
+build:
+  commands:
+    - npm ci --only=production --no-audit --no-fund
+    - npm run build:render
+  publishPath: .next
+
+# Environment for consistent Node version
+runtime:
+  node: 18.18.2
+
+# Static file serving
+static:
+  headers:
+    - key: "Cache-Control"
+      value: "public, max-age=31536000, immutable"
+  publishDir: .next/static
