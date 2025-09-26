@@ -92,11 +92,13 @@
 - [x] Message bubbles + loading states
 - [x] Real-time WebSocket connections
 
-#### 🚧 Phase 5 : RAG & Intégrations (WIP)
+#### ✅ Phase 5 : RAG & Intégrations
 - [x] API Endpoints Complete (REST + SSE + WebSocket)
-- [ ] RAG State-of-the-Art (Knowledge graph + auto-tuning)
-- [ ] Realtime Integration (Subscriptions + sync)
-- [ ] Advanced Search (hybrid vector+fulltext+BM25)
+- [x] RAG State-of-the-Art (Knowledge graph + auto-tuning)
+- [x] Realtime Integration (Subscriptions + sync)
+- [x] Advanced Search (hybrid vector+fulltext+BM25)
+- [x] Web Search Integration (Perplexity + Tavily)
+- [x] Collaborative Features (typing, user status)
 
 #### 📋 Phase 6 : Production
 - [ ] Performance Optimization (CDN + scaling + monitoring)
