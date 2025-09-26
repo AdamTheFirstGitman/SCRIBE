@@ -179,8 +179,8 @@ export default function ChatPage() {
       ],
       mimir: [
         `🧠 J'ai cherché "${input}" dans tes connaissances. Voici ce que j'ai trouvé...`,
-        '🔍 Analyse terminée ! J\\'ai trouvé plusieurs connections avec tes notes précédentes.',
-        '💡 Intéressant ! Cette requête me rappelle d\\'autres éléments de ta base de connaissances.'
+        "🔍 Analyse terminée ! J'ai trouvé plusieurs connections avec tes notes précédentes.",
+        "💡 Intéressant ! Cette requête me rappelle d'autres éléments de ta base de connaissances."
       ]
     }
 
