@@ -3,7 +3,7 @@ services:
     name: scribe-frontend
     env: node
     region: oregon
-    rootDir: .
+    rootDir: frontend
     buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
