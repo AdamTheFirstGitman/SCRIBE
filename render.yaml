@@ -15,10 +15,6 @@ services:
     buildCommand: chmod +x build.sh && ./build.sh
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
     plan: hobby
-
-    pythonVersion: "3.11"
-
-    # Santé et performance
     healthCheckPath: /health
 
     # Variables d'environnement Backend
@@ -93,8 +89,6 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     plan: hobby
-
-    nodeVersion: "18"
 
     # Variables d'environnement Frontend
     envVars:
