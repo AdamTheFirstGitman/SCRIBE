@@ -9,11 +9,15 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 try:
-    import autogen
-    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+    # AutoGen v0.4 imports
+    from autogen_agentchat.agents import AssistantAgent
+    from autogen_agentchat.teams import RoundRobinGroupChat
+    from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
+    from autogen_ext.models.openai import OpenAIChatCompletionClient
+    AUTOGEN_V4_AVAILABLE = True
 except ImportError:
-    # Fallback if autogen is not available
-    autogen = None
+    # Fallback if autogen v0.4 is not available
+    AUTOGEN_V4_AVAILABLE = False
 
 from agents.state import AgentState
 from config import settings
@@ -30,30 +34,31 @@ class AutoGenDiscussion:
     def __init__(self):
         self.plume_agent = None
         self.mimir_agent = None
-        self.user_proxy = None
+        self.model_client = None
         self.group_chat = None
-        self.manager = None
         self._initialized = False
 
     def initialize(self):
-        """Initialize AutoGen agents and group chat"""
-        if autogen is None:
-            logger.warning("AutoGen not available, using fallback implementation")
+        """Initialize AutoGen v0.4 agents and group chat"""
+        if not AUTOGEN_V4_AVAILABLE:
+            logger.warning("AutoGen v0.4 not available, using fallback implementation")
             return
 
         try:
-            # Configure LLM settings for AutoGen
-            llm_config = {
-                "model": settings.MODEL_PLUME,  # Use Claude via OpenAI-compatible endpoint if available
-                "api_key": settings.CLAUDE_API_KEY,
-                "temperature": 0.3,
-                "max_tokens": 2000,
-                "timeout": 120,
-            }
+            # Configure model client for AutoGen v0.4
+            # Since we use Claude, we'll need to use OpenAI-compatible endpoint or create custom client
+            # For now, using OpenAI client with Claude settings (may need adjustment)
+            self.model_client = OpenAIChatCompletionClient(
+                model="gpt-4o",  # Will need to configure for Claude later
+                api_key=settings.OPENAI_API_KEY if hasattr(settings, 'OPENAI_API_KEY') else "placeholder",
+                # temperature=0.3,  # Set via agent system messages
+                # max_tokens=2000,  # Set per agent
+            )
 
             # Create Plume agent
             self.plume_agent = AssistantAgent(
                 name="Plume",
+                model_client=self.model_client,
                 system_message="""Tu es Plume, spécialisée dans la restitution PARFAITE des informations.
 
 MISSION: Capture, transcris et reformule avec précision absolue.
@@ -75,14 +80,13 @@ COLLABORATION:
 - Travaille avec Mimir pour enrichir les réponses
 - Signale les informations manquantes
 - Propose des améliorations structurelles
-- Maintiens la cohérence du message final""",
-                llm_config=llm_config,
-                human_input_mode="NEVER"
+- Maintiens la cohérence du message final"""
             )
 
             # Create Mimir agent
             self.mimir_agent = AssistantAgent(
                 name="Mimir",
+                model_client=self.model_client,
                 system_message="""Tu es Mimir, archiviste et gestionnaire de connaissances méthodique.
 
 MISSION: Archivage, recherche et connexions intelligentes des informations.
@@ -106,52 +110,16 @@ COLLABORATION:
 - Apporte des références et des connexions
 - Propose des pistes de recherche complémentaires
 - Aide à structurer la réponse finale
-- Veille à l'exactitude des informations""",
-                llm_config=llm_config,
-                human_input_mode="NEVER"
+- Veille à l'exactitude des informations"""
             )
 
-            # Create user proxy (represents the human user)
-            self.user_proxy = UserProxyAgent(
-                name="User",
-                system_message="Tu représentes l'utilisateur qui pose une question ou demande une information.",
-                code_execution_config=False,
-                human_input_mode="NEVER",
-                max_consecutive_auto_reply=0  # Don't auto-reply
-            )
+            # Create termination condition - stop when agents agree or max turns reached
+            termination_condition = MaxMessageTermination(6)  # Max 6 rounds
 
-            # Create group chat
-            self.group_chat = GroupChat(
-                agents=[self.user_proxy, self.plume_agent, self.mimir_agent],
-                messages=[],
-                max_round=6,  # Limit conversation rounds
-                speaker_selection_method="round_robin",
-                allow_repeat_speaker=False
-            )
-
-            # Create group chat manager
-            self.manager = GroupChatManager(
-                groupchat=self.group_chat,
-                llm_config=llm_config,
-                system_message="""Tu es le coordinateur de la discussion entre Plume et Mimir.
-
-OBJECTIF: Faciliter une conversation productive pour répondre à la question utilisateur.
-
-RÔLE:
-- Guide la discussion vers une réponse complète
-- Assure que chaque agent contribue selon ses spécialités
-- Évite les répétitions inutiles
-- Synthétise les contributions finales
-- Termine quand la réponse est satisfaisante
-
-DÉROULEMENT OPTIMAL:
-1. Plume reformule/clarifie la question si nécessaire
-2. Mimir apporte le contexte et les références
-3. Plume structure la réponse finale
-4. Mimir complète avec des connexions/approfondissements
-5. Synthèse finale si nécessaire
-
-Reste concis et efficace."""
+            # Create RoundRobinGroupChat with Plume and Mimir
+            self.group_chat = RoundRobinGroupChat(
+                participants=[self.plume_agent, self.mimir_agent],
+                termination_condition=termination_condition
             )
 
             self._initialized = True
@@ -188,25 +156,20 @@ Reste concis et efficace."""
             # Prepare context information for the discussion
             context_summary = self._prepare_context_summary(context)
 
-            # Format the initial message
-            initial_message = f"""Question utilisateur: {user_input}
+            # Format the initial task message
+            task_message = f"""Question utilisateur: {user_input}
 
 Contexte disponible:
 {context_summary}
 
 Travaillez ensemble pour fournir une réponse complète et précise."""
 
-            # Start the group discussion
-            result = await asyncio.to_thread(
-                self.user_proxy.initiate_chat,
-                self.manager,
-                message=initial_message,
-                max_turns=8
-            )
+            # Run the group discussion using AutoGen v0.4 async API
+            result = await self.group_chat.run(task=task_message)
 
-            # Extract and format the discussion
-            messages = self.group_chat.messages
-            final_response = self._extract_final_response(messages)
+            # Extract messages and final response from v0.4 result
+            messages = result.messages if hasattr(result, 'messages') else []
+            final_response = self._extract_final_response_v4(messages)
 
             # Calculate usage and costs
             total_tokens = self._estimate_tokens(messages)
@@ -220,9 +183,9 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
                        duration_ms=duration_ms)
 
             return {
-                "messages": self._format_messages(messages),
+                "messages": self._format_messages_v4(messages),
                 "final_response": final_response,
-                "html": self._generate_discussion_html(messages, final_response),
+                "html": self._generate_discussion_html_v4(messages, final_response),
                 "total_tokens": total_tokens,
                 "total_cost": total_cost,
                 "processing_time_ms": duration_ms,
@@ -272,6 +235,144 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             final_response = messages[-1].get("content", "Aucune réponse disponible.")
 
         return final_response
+
+    def _extract_final_response_v4(self, messages: List) -> str:
+        """Extract the final synthesized response from AutoGen v0.4 discussion"""
+        if not messages:
+            return "Aucune réponse générée par la discussion."
+
+        # AutoGen v0.4 messages have different structure
+        final_response = ""
+
+        for message in reversed(messages):
+            # v0.4 messages might have different attributes
+            content = ""
+            source = ""
+
+            if hasattr(message, 'content'):
+                content = str(message.content).strip()
+            elif hasattr(message, 'text'):
+                content = str(message.text).strip()
+            elif isinstance(message, dict):
+                content = message.get('content', '').strip()
+
+            if hasattr(message, 'source'):
+                source = str(message.source)
+            elif hasattr(message, 'name'):
+                source = str(message.name)
+            elif isinstance(message, dict):
+                source = message.get('source', message.get('name', ''))
+
+            if source in ["Plume", "Mimir"] and len(content) > 50:
+                final_response = content
+                break
+
+        # If no substantial response found, use the last message
+        if not final_response and messages:
+            last_msg = messages[-1]
+            if hasattr(last_msg, 'content'):
+                final_response = str(last_msg.content)
+            elif isinstance(last_msg, dict):
+                final_response = last_msg.get('content', 'Aucune réponse disponible.')
+            else:
+                final_response = "Aucune réponse disponible."
+
+        return final_response
+
+    def _format_messages_v4(self, messages: List) -> List[Dict[str, Any]]:
+        """Format AutoGen v0.4 discussion messages for storage"""
+        formatted = []
+
+        for msg in messages:
+            content = ""
+            source = ""
+
+            if hasattr(msg, 'content'):
+                content = str(msg.content)
+            elif hasattr(msg, 'text'):
+                content = str(msg.text)
+            elif isinstance(msg, dict):
+                content = msg.get('content', '')
+
+            if hasattr(msg, 'source'):
+                source = str(msg.source)
+            elif hasattr(msg, 'name'):
+                source = str(msg.name)
+            elif isinstance(msg, dict):
+                source = msg.get('source', msg.get('name', 'Unknown'))
+
+            # Skip initial user messages and empty messages
+            if source not in ["User", "user"] and content.strip():
+                formatted.append({
+                    "agent": source,
+                    "content": content,
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "role": "agent"
+                })
+
+        return formatted
+
+    def _generate_discussion_html_v4(self, messages: List, final_response: str) -> str:
+        """Generate HTML representation of the AutoGen v0.4 discussion"""
+        html = '<div class="discussion-container space-y-4">\n'
+
+        # Discussion header
+        html += '<h3 class="text-lg font-semibold text-gray-200 mb-4">💬 Discussion Plume & Mimir (v0.4)</h3>\n'
+
+        # Discussion messages
+        html += '<div class="discussion-messages space-y-3">\n'
+
+        for msg in messages:
+            content = ""
+            source = ""
+
+            if hasattr(msg, 'content'):
+                content = str(msg.content)
+            elif isinstance(msg, dict):
+                content = msg.get('content', '')
+
+            if hasattr(msg, 'source'):
+                source = str(msg.source)
+            elif hasattr(msg, 'name'):
+                source = str(msg.name)
+            elif isinstance(msg, dict):
+                source = msg.get('source', msg.get('name', ''))
+
+            if source in ["User", "user"] or not content.strip():
+                continue
+
+            # Agent styling
+            if source == "Plume":
+                css_class = "bg-plume-500/10 border-plume-500/30 text-plume-50"
+                icon = "🖋️"
+            elif source == "Mimir":
+                css_class = "bg-mimir-500/10 border-mimir-500/30 text-mimir-50"
+                icon = "🧠"
+            else:
+                css_class = "bg-gray-800 border-gray-600 text-gray-200"
+                icon = "🤖"
+
+            html += f'''
+            <div class="message-bubble {css_class} border rounded-lg p-3">
+                <div class="flex items-center mb-2">
+                    <span class="text-lg mr-2">{icon}</span>
+                    <span class="font-medium text-sm">{source}</span>
+                </div>
+                <div class="text-sm leading-relaxed">{self._format_content_html(content)}</div>
+            </div>\n'''
+
+        html += '</div>\n'
+
+        # Final synthesis
+        html += f'''
+        <div class="final-response mt-6 p-4 bg-gray-800 border border-gray-600 rounded-lg">
+            <h4 class="font-semibold text-gray-200 mb-2">🎯 Synthèse finale (v0.4)</h4>
+            <div class="text-gray-200 leading-relaxed">{self._format_content_html(final_response)}</div>
+        </div>
+        '''
+
+        html += '</div>'
+        return html
 
     def _format_messages(self, messages: List[Dict]) -> List[Dict[str, Any]]:
         """Format discussion messages for storage"""
@@ -378,8 +479,8 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
 
         try:
             # Import agents
-            from plume import plume_agent
-            from mimir import mimir_agent
+            from agents.plume import plume_agent
+            from agents.mimir import mimir_agent
 
             start_time = time.time()
             messages = []
@@ -436,7 +537,7 @@ Reformule cette réponse de manière plus claire et structurée, en préservant 
             return {
                 "messages": messages,
                 "final_response": final_response,
-                "html": self._generate_discussion_html([
+                "html": self._generate_discussion_html_v4([
                     {"name": "Mimir", "content": mimir_response},
                     {"name": "Plume", "content": plume_response}
                 ], final_response),
