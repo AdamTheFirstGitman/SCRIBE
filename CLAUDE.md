@@ -108,7 +108,16 @@
 - [x] Automated Backup & Data Protection
 - [x] End-to-End Testing Suite (Playwright)
 - [x] Offline PWA Support (Service Workers + IndexedDB)
-- [ ] UI/UX Polish (Micro-interactions + shortcuts) - *En attente test utilisateur*
+- [x] Render Deployment Configuration (Hobby plan + sécurisé)
+
+#### 📋 Phase 7 : Polish & Advanced UX
+- [ ] Streaming Chat (Vercel AI SDK + LangGraph hybrid)
+- [ ] Micro-interactions avancées (animations, transitions fluides)
+- [ ] Keyboard Shortcuts système (raccourcis clavier intelligents)
+- [ ] Performance Ultra (lazy loading, code splitting, optimisations)
+- [ ] Accessibility A11Y (ARIA, navigation clavier, screen readers)
+- [ ] Dark/Light Mode toggle (thème adaptatif)
+- [ ] Advanced Search UX (suggestions, filtres, historique)
 
 ### Configuration Déploiement
 
@@ -120,19 +129,19 @@ cd frontend && npm run dev
 cd database && python test_connection.py
 ```
 
-**Production (Render + Vercel) :**
-- Backend : Render.com avec autoscaling
-- Frontend : Vercel ou export statique
+**Production (Render Plan Hobby) :**
+- Backend : Render.com (scribe-api privé)
+- Frontend : Render.com (scribe-frontend public)
 - Database : Supabase Pro
-- Cache : Redis Cloud
-- Monitoring : Health checks + métriques
+- Cache : Redis Cloud (optionnel)
+- Monitoring : Health checks + métriques Render intégrés
 
 ### Budget & Performance
 
 **Coûts Mensuels :**
-- Infrastructure : 55-65€ (Supabase Pro + Render + Redis)
-- APIs : 30-55€ (Claude + OpenAI + services)
-- **Total : 85-120€/mois**
+- Infrastructure : 19€ (Render Hobby) + 25€ (Supabase Pro) = 44€
+- APIs : 30-55€ (Claude + OpenAI + Perplexity + Tavily)
+- **Total : 74-99€/mois** (économie vs estimation initiale)
 
 **Targets Performance :**
 - FCP < 1s, TTI < 2s
