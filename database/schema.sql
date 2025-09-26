@@ -6,12 +6,31 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE EXTENSION IF NOT EXISTS "btree_gin";
 
--- Notes principale table
+-- Documents table for file uploads and processing
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    filename TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content_text TEXT NOT NULL,
+    content_html TEXT NOT NULL,
+    file_type TEXT NOT NULL DEFAULT 'text/plain',
+    file_size INTEGER,
+    upload_source TEXT DEFAULT 'manual',
+    processing_status TEXT DEFAULT 'completed' CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}',
+    tags TEXT[] DEFAULT '{}',
+    is_deleted BOOLEAN DEFAULT FALSE
+);
+
+-- Notes principale table (keep for backward compatibility)
 CREATE TABLE notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     html TEXT,
+    document_id UUID REFERENCES documents(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     metadata JSONB DEFAULT '{}',
@@ -22,6 +41,7 @@ CREATE TABLE notes (
 -- Embeddings table for RAG
 CREATE TABLE embeddings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
     note_id UUID REFERENCES notes(id) ON DELETE CASCADE,
     chunk_text TEXT NOT NULL,
     embedding vector(1536), -- OpenAI text-embedding-3-large dimensions
@@ -60,9 +80,16 @@ CREATE INDEX idx_notes_fulltext_french ON notes
 USING GIN (to_tsvector('french', title || ' ' || content));
 
 -- Standard indexes
+CREATE INDEX idx_documents_created_at ON documents (created_at DESC);
+CREATE INDEX idx_documents_filename ON documents (filename);
+CREATE INDEX idx_documents_status ON documents (processing_status);
+CREATE INDEX idx_documents_tags ON documents USING GIN (tags);
+CREATE INDEX idx_documents_metadata ON documents USING GIN (metadata);
 CREATE INDEX idx_notes_created_at ON notes (created_at DESC);
 CREATE INDEX idx_notes_tags ON notes USING GIN (tags);
 CREATE INDEX idx_notes_metadata ON notes USING GIN (metadata);
+CREATE INDEX idx_notes_document_id ON notes (document_id);
+CREATE INDEX idx_embeddings_document_id ON embeddings (document_id);
 CREATE INDEX idx_embeddings_note_id ON embeddings (note_id);
 CREATE INDEX idx_conversations_session_id ON conversations (session_id);
 CREATE INDEX idx_conversations_created_at ON conversations (created_at DESC);
@@ -77,6 +104,9 @@ END;
 $$ language 'plpgsql';
 
 -- Apply updated_at triggers
+CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_notes_updated_at BEFORE UPDATE ON notes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -166,6 +196,7 @@ END;
 $$;
 
 -- Row Level Security (RLS) setup for future multi-user support
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE embeddings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
@@ -173,6 +204,7 @@ ALTER TABLE search_queries ENABLE ROW LEVEL SECURITY;
 
 -- For now, allow all operations (single user)
 -- These policies can be refined later for multi-user scenarios
+CREATE POLICY "Allow all operations on documents" ON documents FOR ALL USING (true);
 CREATE POLICY "Allow all operations on notes" ON notes FOR ALL USING (true);
 CREATE POLICY "Allow all operations on embeddings" ON embeddings FOR ALL USING (true);
 CREATE POLICY "Allow all operations on conversations" ON conversations FOR ALL USING (true);
