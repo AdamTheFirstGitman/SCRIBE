@@ -120,6 +120,8 @@ services:
         value: "0.0.0.0"
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      - key: ESLINT_NO_DEV_ERRORS
+        value: "true"
 
       # API Backend
       - key: NEXT_PUBLIC_API_URL
