@@ -213,6 +213,8 @@ AGENTS/
 - pydantic-settings 2.x : strings + propriétés list pour parsing arrays
 - Clés sécurité : defaults 64-char générées si variables manquantes
 - Jamais signer commits au nom de Claude, toujours utilisateur
+- **TOUJOURS faire "maj" avant tout commit/push** (règle obligatoire)
+- Pydantic V2 : migration @validator → @field_validator + @classmethod + mode="before"
 
 ---
 

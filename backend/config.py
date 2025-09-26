@@ -3,7 +3,7 @@ Configuration management for Plume & Mimir backend
 Uses Pydantic Settings for environment variable validation
 """
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 from typing import List, Optional, Dict, Any
 from enum import Enum
@@ -180,42 +180,47 @@ class Settings(BaseSettings):
     # =============================================================================
     # VALIDATORS
     # =============================================================================
-    @validator("CORS_ORIGINS", pre=True)
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
                 return "http://localhost:3000,http://127.0.0.1:3000"
         return v
 
-    @validator("ALLOWED_HOSTS", pre=True)
+    @field_validator("ALLOWED_HOSTS", mode="before")
+    @classmethod
     def parse_allowed_hosts(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
                 return "localhost,127.0.0.1,0.0.0.0"
         return v
 
-    @validator("ALLOWED_AUDIO_FORMATS", pre=True)
+    @field_validator("ALLOWED_AUDIO_FORMATS", mode="before")
+    @classmethod
     def parse_audio_formats(cls, v):
         if isinstance(v, str):
             if v.strip() == "":
                 return "webm,mp3,wav,m4a,ogg"
         return v
 
-    @validator("SECRET_KEY", "JWT_SECRET", pre=True)
-    def validate_secrets(cls, v, field):
+    @field_validator("SECRET_KEY", "JWT_SECRET", mode="before")
+    @classmethod
+    def validate_secrets(cls, v):
         if v in ["YOUR_SECRET_KEY_HERE", "YOUR_JWT_SECRET_HERE"] or len(v) < 32:
-            # Generate a secure 32+ char key if placeholder or too short
             import secrets
             return secrets.token_urlsafe(32)
         return v
 
-    @validator("TEMPERATURE_PLUME", "TEMPERATURE_MIMIR")
+    @field_validator("TEMPERATURE_PLUME", "TEMPERATURE_MIMIR")
+    @classmethod
     def validate_temperature(cls, v):
         if not 0.0 <= v <= 2.0:
             raise ValueError("Temperature must be between 0.0 and 2.0")
         return v
 
-    @validator("RAG_SIMILARITY_THRESHOLD")
+    @field_validator("RAG_SIMILARITY_THRESHOLD")
+    @classmethod
     def validate_similarity_threshold(cls, v):
         if not 0.0 <= v <= 1.0:
             raise ValueError("Similarity threshold must be between 0.0 and 1.0")
