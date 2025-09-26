@@ -8,7 +8,7 @@ services:
   - type: web
     name: scribe-api
     runtime: python
-    repo: https://github.com/adamdahan/SCRIBE.git
+    repo: https://github.com/AdamTheFirstGitman/SCRIBE.git
     region: oregon
     branch: main
     rootDir: backend
@@ -82,7 +82,7 @@ services:
   - type: web
     name: scribe-frontend
     runtime: node
-    repo: https://github.com/adamdahan/SCRIBE.git
+    repo: https://github.com/AdamTheFirstGitman/SCRIBE.git
     region: oregon
     branch: main
     rootDir: frontend
