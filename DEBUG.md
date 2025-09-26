@@ -163,6 +163,22 @@ redis>=5.0.0  # Pour services/cache.py
 
 ---
 
+## ❌ Issue #11: Missing List import (RÉSOLU)
+**Erreur :**
+```
+File "/opt/render/project/src/backend/services/transcription.py", line 289
+    async def get_supported_formats(self) -> List[str]:
+                                             ^^^^
+NameError: name 'List' is not defined. Did you mean: 'list'?
+```
+**Cause :** Python 3.12+ exige imports typing explicites
+**Solution :** Ajout List à l'import typing
+```python
+from typing import Dict, Any, Optional, List  # Ajout de List
+```
+
+---
+
 ## ✅ AutoGen v0.4 Migration (COMPLET)
 **Migration :** Ancienne API v0.2 → Nouvelle API v0.4
 **Changements majeurs :**
@@ -176,7 +192,7 @@ redis>=5.0.0  # Pour services/cache.py
 ---
 
 ## 📊 Statistiques Debug
-- **Issues résolues :** 10/10 ✅
+- **Issues résolues :** 11/11 ✅
 - **Migration :** AutoGen v0.4 complète ✅
 - **Temps total debug :** ~3.5h
 - **Pattern principal :** Problèmes imports/dépendances Python + Migration API
