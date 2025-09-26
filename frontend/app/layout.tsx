@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Providers } from '@/components/providers'
-import { PWAInstallPrompt } from '@/components/pwa/InstallPrompt'
-import OfflineStatus from '@/components/OfflineStatus'
+import { Providers } from '../components/providers'
+import { PWAInstallPrompt } from '../components/pwa/InstallPrompt'
+import OfflineStatus from '../components/OfflineStatus'
 
 const inter = Inter({ subsets: ['latin'] })
 

@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent } from '../../components/ui/card'
+import { Textarea } from '../../components/ui/textarea'
 import {
   Mic,
   MicOff,
@@ -17,7 +17,7 @@ import {
   Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { OfflineUtils } from '@/lib/offline'
+import { OfflineUtils } from '../../lib/offline'
 
 // Types
 type Agent = 'plume' | 'mimir'

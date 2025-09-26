@@ -2,12 +2,12 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Badge } from '../../components/ui/badge'
+import { Input } from '../../components/ui/input'
+import { Label } from '../../components/ui/label'
+import { Switch } from '../../components/ui/switch'
 import {
   Upload,
   FileText,
@@ -19,8 +19,8 @@ import {
   X
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { uploadDocument } from '@/lib/api/upload'
-import { OfflineUtils } from '@/lib/offline'
+import { uploadDocument } from '../../lib/api/upload'
+import { OfflineUtils } from '../../lib/offline'
 
 interface ProcessedDocument {
   id: string

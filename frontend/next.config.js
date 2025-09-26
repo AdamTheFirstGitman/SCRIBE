@@ -197,6 +197,19 @@ const nextConfig = {
       }
     }
 
+    // Force alias resolution for Render.com deployment
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname),
+      '@/components': require('path').resolve(__dirname, 'components'),
+      '@/lib': require('path').resolve(__dirname, 'lib'),
+      '@/app': require('path').resolve(__dirname, 'app'),
+      '@/hooks': require('path').resolve(__dirname, 'hooks'),
+      '@/styles': require('path').resolve(__dirname, 'styles'),
+      '@/types': require('path').resolve(__dirname, 'types'),
+      '@/utils': require('path').resolve(__dirname, 'utils'),
+    }
+
     // Optimize chunks in production
     if (!dev) {
       config.optimization.splitChunks = {
