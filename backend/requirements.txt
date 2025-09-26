@@ -20,6 +20,7 @@ supabase>=2.9.0
 sqlalchemy>=2.0.30
 asyncpg>=0.29.0
 psycopg2-binary>=2.9.9
+redis>=5.0.0
 
 # HTTP & Requests (versions flexibles pour éviter conflits)
 httpx>=0.26,<0.28

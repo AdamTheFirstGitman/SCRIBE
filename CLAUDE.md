@@ -109,6 +109,7 @@
 - [x] End-to-End Testing Suite (Playwright)
 - [x] Offline PWA Support (Service Workers + IndexedDB)
 - [x] Render Deployment Configuration (Hobby plan + sécurisé)
+- [x] Render Debug Complete (10 issues résolues - voir DEBUG.md)
 
 #### 📋 Phase 7 : Polish & Advanced UX
 - [ ] Streaming Chat (Vercel AI SDK + LangGraph hybrid)

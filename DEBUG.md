@@ -147,9 +147,25 @@ from agents.state import AgentState
 
 ---
 
+## ❌ Issue #10: redis package missing (RÉSOLU)
+**Erreur :**
+```
+File "/opt/render/project/src/backend/services/cache.py", line 16, in <module>
+    import redis.asyncio as redis
+ModuleNotFoundError: No module named 'redis'
+```
+**Cause :** Package `redis` manquant dans requirements.txt
+**Solution :** Ajout redis>=5.0.0 dans requirements.txt
+```python
+# Dans requirements.txt
+redis>=5.0.0  # Pour services/cache.py
+```
+
+---
+
 ## 📊 Statistiques Debug
-- **Issues résolues :** 9/9 ✅
-- **Temps total debug :** ~2.5h
+- **Issues résolues :** 10/10 ✅
+- **Temps total debug :** ~3h
 - **Pattern principal :** Problèmes imports/dépendances Python
 - **Outil critique :** Script check_imports.py
 
