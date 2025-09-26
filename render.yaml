@@ -16,6 +16,13 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
     plan: starter
     healthCheckPath: /health
+    buildFilter:
+      paths:
+      - backend/**
+      ignoredPaths:
+      - frontend/**
+      - README.md
+      - docs/**
 
     # Variables d'environnement Backend
     envVars:
@@ -89,25 +96,40 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     plan: starter
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+      - frontend/**
+      ignoredPaths:
+      - backend/**
+      - README.md
+      - docs/**
 
     # Variables d'environnement Frontend
     envVars:
-      # Next.js
+      # Node.js Configuration
+      - key: NODE_VERSION
+        value: "20.18.0"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=4096"
       - key: NODE_ENV
         value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
 
-      # API Backend (référence interne Render)
+      # API Backend
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: scribe-api
-          property: host
+        value: https://scribe-api.onrender.com
 
-      # Supabase (public keys) - À configurer dans Render Dashboard
+      # Supabase Configuration
       - key: NEXT_PUBLIC_SUPABASE_URL
-        value: YOUR_SUPABASE_URL_HERE
+        value: https://eytfiohvhlqokikemlfn.supabase.co
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        value: YOUR_SUPABASE_ANON_KEY_HERE
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5dGZpb2h2aGxxb2tpa2VtbGZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4NzU3NjUsImV4cCI6MjA3NDQ1MTc2NX0.szIeUg_5PG0ZiIhmD6QlPXf31EYB-vOLzfJwrkhA9I8
+
+      # Application URL
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://scribe-frontend-qk6s.onrender.com
 
       # PWA Configuration
       - key: NEXT_PUBLIC_PWA_ENABLED
