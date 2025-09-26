@@ -216,7 +216,8 @@ AGENTS/
 - **TOUJOURS faire "maj" avant tout commit/push** (règle obligatoire)
 - Pydantic V2 : migration @validator → @field_validator + @classmethod + mode="before"
 - Script audit d'imports : automatiser détection modules manquants/mal importés
-- API placeholders : créer routes minimales pour éviter ModuleNotFoundError
+- DEBUG.md : carnet de bord dédié debug deployment (extraction issues CLAUDE.md)
+- Imports state : agents.state au lieu de state (path absolu requis)
 
 ---
 

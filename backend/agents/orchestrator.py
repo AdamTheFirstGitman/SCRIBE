@@ -11,7 +11,7 @@ from datetime import datetime
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 
-from state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
+from agents.state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
 from services.transcription import transcription_service
 from services.embeddings import embedding_service
 from services.rag import rag_service
@@ -561,7 +561,7 @@ class PlumeOrchestrator:
             await self.initialize()
 
         # Create initial state
-        from state import create_initial_state
+        from agents.state import create_initial_state
         initial_state = create_initial_state(
             input_text=input_text,
             mode=mode,

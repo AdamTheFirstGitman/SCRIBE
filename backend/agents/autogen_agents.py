@@ -15,7 +15,7 @@ except ImportError:
     # Fallback if autogen is not available
     autogen = None
 
-from state import AgentState
+from agents.state import AgentState
 from config import settings
 from utils.logger import get_agent_logger, cost_logger
 
