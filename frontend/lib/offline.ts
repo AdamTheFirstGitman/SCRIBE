@@ -207,7 +207,9 @@ export const BackgroundSync = {
   async registerUploadSync(): Promise<void> {
     if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
       const registration = await navigator.serviceWorker.ready;
-      await registration.sync.register('document-upload');
+      if ('sync' in registration) {
+        await (registration as any).sync.register('document-upload');
+      }
     }
   },
 

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: process.env.NEXT_PUBLIC_APP_URL,
+    url: process.env['NEXT_PUBLIC_APP_URL'] || 'https://scribe.app',
     title: 'Plume & Mimir - Gestion de Connaissances IA',
     description: 'Système intelligent de gestion de connaissances avec agents IA spécialisés',
     siteName: 'Plume & Mimir',

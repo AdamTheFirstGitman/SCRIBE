@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Mic,
-  MicOff,
   Square,
   Loader2,
   Volume2,
@@ -50,11 +49,12 @@ export function VoiceRecorder({
   // Start recording
   const startRecording = useCallback(async () => {
     if (!isAudioSupported) {
-      onError(new Error('Audio recording not supported'))
+      toast.error('Enregistrement audio non supporté par ce navigateur')
       return
     }
 
     try {
+      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -65,32 +65,25 @@ export function VoiceRecorder({
       })
 
       streamRef.current = stream
+      audioChunksRef.current = []
 
-      // Create audio context for level monitoring
-      audioContextRef.current = new AudioContext()
-      const source = audioContextRef.current.createMediaStreamSource(stream)
-      analyserRef.current = audioContextRef.current.createAnalyser()
-      analyserRef.current.fftSize = 256
-      source.connect(analyserRef.current)
+      // Setup audio context for level monitoring
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const analyser = audioContext.createAnalyser()
+      const microphone = audioContext.createMediaStreamSource(stream)
 
-      // Monitor audio levels
-      const monitorLevels = () => {
-        if (analyserRef.current && isRecording) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
-          analyserRef.current.getByteFrequencyData(dataArray)
-          const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
-          setAudioLevel(Math.min(100, (average / 128) * 100))
-          requestAnimationFrame(monitorLevels)
-        }
-      }
+      analyser.fftSize = 256
+      microphone.connect(analyser)
 
-      // Create MediaRecorder
+      audioContextRef.current = audioContext
+      analyserRef.current = analyser
+
+      // Setup MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+        mimeType: 'audio/webm;codecs=opus'
       })
 
       mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -99,38 +92,8 @@ export function VoiceRecorder({
       }
 
       mediaRecorder.onstop = async () => {
-        setIsProcessing(true)
-
-        try {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: mediaRecorder.mimeType
-          })
-
-          // Check if we have actual audio data
-          if (audioBlob.size < 1000) {
-            throw new Error('Recording too short or empty')
-          }
-
-          setHasAudio(true)
-
-          // Transcribe audio
-          const result = await transcribeAudio(audioBlob)
-
-          if (result.text.trim()) {
-            onTranscription(result.text, result.confidence)
-            toast.success(`Transcription réussie (${Math.round(result.confidence * 100)}% confiance)`)
-          } else {
-            throw new Error('No speech detected in recording')
-          }
-
-        } catch (error) {
-          console.error('Transcription error:', error)
-          const errorMessage = error instanceof Error ? error.message : 'Transcription failed'
-          onError(new Error(errorMessage))
-          toast.error('Échec de la transcription')
-        } finally {
-          setIsProcessing(false)
-          setHasAudio(false)
+        if (audioChunksRef.current.length > 0) {
+          await processRecording()
         }
       }
 
@@ -138,55 +101,135 @@ export function VoiceRecorder({
       mediaRecorder.start(100) // Collect data every 100ms
       setIsRecording(true)
       setRecordingTime(0)
+      setHasAudio(false)
 
       // Start timer
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1)
       }, 1000)
 
-      // Start level monitoring
-      monitorLevels()
+      // Start audio level monitoring
+      monitorAudioLevel()
 
-      toast.info('🎙️ Enregistrement démarré')
+      toast.success('🎙️ Enregistrement démarré')
 
     } catch (error) {
       console.error('Failed to start recording:', error)
-      onError(new Error('Impossible d\\'accéder au microphone'))
-      toast.error('Échec d\\'accès au microphone')
+      toast.error('Impossible d\'accéder au microphone')
+      onError(error as Error)
     }
-  }, [isAudioSupported, onError, onTranscription, isRecording])
+  }, [isAudioSupported, onError])
 
   // Stop recording
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
-      setAudioLevel(0)
 
-      // Stop timer
+      // Clear timer
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
       }
 
-      // Clean up audio context
-      if (audioContextRef.current) {
-        audioContextRef.current.close()
-        audioContextRef.current = null
-      }
-
-      // Stop media stream
+      // Stop all tracks
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop())
         streamRef.current = null
       }
 
-      toast.info('Enregistrement arrêté, transcription...')
+      // Close audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+        audioContextRef.current = null
+      }
+
+      analyserRef.current = null
+      setAudioLevel(0)
+
+      toast.info('⏸️ Enregistrement arrêté, traitement en cours...')
     }
   }, [isRecording])
 
+  // Monitor audio levels
+  const monitorAudioLevel = useCallback(() => {
+    if (!analyserRef.current) return
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
+
+    const updateLevel = () => {
+      if (!analyserRef.current || !isRecording) return
+
+      analyserRef.current.getByteFrequencyData(dataArray)
+
+      // Calculate average volume
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
+      const normalizedLevel = average / 255
+
+      setAudioLevel(normalizedLevel)
+
+      // Detect if there's actual audio input
+      if (normalizedLevel > 0.01) {
+        setHasAudio(true)
+      }
+
+      requestAnimationFrame(updateLevel)
+    }
+
+    updateLevel()
+  }, [isRecording])
+
+  // Process the recorded audio
+  const processRecording = useCallback(async () => {
+    if (audioChunksRef.current.length === 0) {
+      toast.warning('Aucun audio enregistré')
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      // Create audio blob
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+
+      // Check minimum file size (avoid empty recordings)
+      if (audioBlob.size < 1000) {
+        toast.warning('Enregistrement trop court')
+        setIsProcessing(false)
+        return
+      }
+
+      // Send to transcription API
+      const result = await transcribeAudio(audioBlob)
+
+      if (result.text && result.text.trim()) {
+        onTranscription(result.text.trim(), result.confidence || 0.8)
+        toast.success('🎯 Transcription réussie')
+      } else {
+        toast.warning('Aucun texte détecté dans l\'audio')
+      }
+
+    } catch (error) {
+      console.error('Transcription failed:', error)
+      toast.error('Erreur lors de la transcription')
+      onError(error as Error)
+    } finally {
+      setIsProcessing(false)
+      audioChunksRef.current = []
+    }
+  }, [onTranscription, onError])
+
+  // Format time display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
   // Toggle recording
   const toggleRecording = () => {
+    if (disabled || isProcessing) return
+
     if (isRecording) {
       stopRecording()
     } else {
@@ -194,128 +237,93 @@ export function VoiceRecorder({
     }
   }
 
-  // Format recording time
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
-  // Clean up on unmount
-  React.useEffect(() => {
-    return () => {
-      if (isRecording) {
-        stopRecording()
-      }
-    }
-  }, [isRecording, stopRecording])
-
   if (!isAudioSupported) {
     return (
-      <Button variant=\"outline\" size=\"icon\" disabled className={className}>
-        <VolumeX className=\"h-4 w-4\" />
-      </Button>
+      <div className={`flex items-center gap-2 text-gray-500 ${className}`}>
+        <VolumeX className="h-4 w-4" />
+        <span className="text-sm">Audio non supporté</span>
+      </div>
     )
   }
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-
-      {/* Recording indicator */}
-      {isRecording && (
-        <div className=\"flex items-center gap-2\">
-          <Badge variant=\"destructive\" className=\"animate-pulse\">
-            <div className=\"w-2 h-2 bg-white rounded-full mr-1\" />
-            {formatTime(recordingTime)}
-          </Badge>
-
-          {/* Audio level indicator */}
-          <div className=\"w-16 h-2 bg-gray-200 rounded-full overflow-hidden\">
-            <div
-              className=\"h-full bg-green-500 transition-all duration-100\"
-              style={{ width: `${audioLevel}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Record/Stop Button */}
+      {/* Recording button */}
       <Button
-        variant={isRecording ? \"destructive\" : \"outline\"}
-        size=\"icon\"
         onClick={toggleRecording}
         disabled={disabled || isProcessing}
-        className=\"flex-shrink-0\"
-        title={isRecording ? 'Arrêter l\\'enregistrement' : 'Commencer l\\'enregistrement'}
+        variant={isRecording ? "destructive" : "outline"}
+        size="icon"
+        className={`
+          relative transition-all duration-200
+          ${isRecording
+            ? 'animate-pulse shadow-lg shadow-red-500/30'
+            : 'hover:scale-105'
+          }
+        `}
       >
         {isProcessing ? (
-          <Loader2 className=\"h-4 w-4 animate-spin\" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : isRecording ? (
-          <Square className=\"h-4 w-4\" />
+          <Square className="h-4 w-4" />
         ) : (
-          <Mic className=\"h-4 w-4\" />
+          <Mic className="h-4 w-4" />
+        )}
+
+        {/* Audio level indicator */}
+        {isRecording && (
+          <div
+            className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping"
+            style={{
+              opacity: Math.max(0.3, audioLevel),
+              transform: `scale(${1 + audioLevel * 0.5})`
+            }}
+          />
         )}
       </Button>
 
-      {/* Processing indicator */}
-      {isProcessing && (
-        <div className=\"flex items-center gap-2\">
-          <Loader2 className=\"h-4 w-4 animate-spin\" />
-          <span className=\"text-sm text-gray-600\">Transcription...</span>
+      {/* Recording status */}
+      {(isRecording || isProcessing) && (
+        <div className="flex items-center gap-2">
+          {isRecording && (
+            <>
+              <Badge
+                variant="danger"
+                className="animate-pulse"
+              >
+                REC {formatTime(recordingTime)}
+              </Badge>
+
+              {/* Audio level bars */}
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`
+                      w-1 h-3 rounded-full transition-all duration-150
+                      ${audioLevel > (i + 1) * 0.2
+                        ? 'bg-red-500'
+                        : 'bg-gray-600'
+                      }
+                    `}
+                  />
+                ))}
+              </div>
+
+              {hasAudio && (
+                <Volume2 className="h-4 w-4 text-green-500" />
+              )}
+            </>
+          )}
+
+          {isProcessing && (
+            <Badge variant="secondary">
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              Transcription...
+            </Badge>
+          )}
         </div>
       )}
     </div>
   )
-}
-
-// Hook for managing voice recording state
-export function useVoiceRecording() {
-  const [isSupported, setIsSupported] = useState(false)
-  const [permission, setPermission] = useState<PermissionState | null>(null)
-
-  React.useEffect(() => {
-    // Check if audio recording is supported
-    const supported = typeof navigator !== 'undefined' &&
-                     navigator.mediaDevices &&
-                     navigator.mediaDevices.getUserMedia
-
-    setIsSupported(supported)
-
-    // Check microphone permission
-    if (supported && navigator.permissions) {
-      navigator.permissions.query({ name: 'microphone' as PermissionName })
-        .then(permissionStatus => {
-          setPermission(permissionStatus.state)
-
-          permissionStatus.addEventListener('change', () => {
-            setPermission(permissionStatus.state)
-          })
-        })
-        .catch(() => {
-          // Permission API not supported, assume we need to request
-          setPermission(null)
-        })
-    }
-  }, [])
-
-  const requestPermission = async (): Promise<boolean> => {
-    if (!isSupported) return false
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      stream.getTracks().forEach(track => track.stop()) // Stop immediately
-      setPermission('granted')
-      return true
-    } catch (error) {
-      setPermission('denied')
-      return false
-    }
-  }
-
-  return {
-    isSupported,
-    permission,
-    requestPermission,
-    hasPermission: permission === 'granted'
-  }
 }

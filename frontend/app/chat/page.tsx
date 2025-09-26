@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import {
   Mic,
   MicOff,
@@ -189,7 +188,7 @@ export default function ChatPage() {
     // Replace loading message with actual response
     setMessages(prev => prev.map(msg =>
       msg.id === loadingId
-        ? { ...msg, content: agentResponse, isLoading: false }
+        ? { ...msg, content: agentResponse, isLoading: false } as ChatMessage
         : msg
     ))
   }
@@ -221,15 +220,15 @@ export default function ChatPage() {
       plume: {
         name: 'Plume',
         icon: Feather,
-        color: 'text-purple-500',
-        bgColor: 'bg-purple-100',
+        color: 'text-plume-500',
+        bgColor: 'bg-plume-500/20',
         description: 'Restitution parfaite'
       },
       mimir: {
         name: 'Mimir',
         icon: Brain,
-        color: 'text-emerald-500',
-        bgColor: 'bg-emerald-100',
+        color: 'text-mimir-500',
+        bgColor: 'bg-mimir-500/20',
         description: 'Archiviste RAG'
       }
     }[agent]
@@ -238,36 +237,36 @@ export default function ChatPage() {
   const selectedAgentInfo = getAgentInfo(selectedAgent)
 
   return (
-    <div className=\"min-h-screen bg-gray-50 flex flex-col\">
+    <div className="min-h-screen bg-gray-950 flex flex-col">
 
       {/* Header */}
-      <div className=\"bg-white border-b border-gray-200 p-4\">
-        <div className=\"max-w-4xl mx-auto flex items-center justify-between\">
-          <div className=\"flex items-center gap-3\">
-            <MessageSquare className=\"h-6 w-6 text-purple-600\" />
-            <h1 className=\"text-xl font-bold text-gray-900\">SCRIBE Chat</h1>
+      <div className="bg-gray-900/50 border-b border-gray-800 p-4 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6 text-plume-500" />
+            <h1 className="text-xl font-bold text-gray-50">SCRIBE Chat</h1>
           </div>
 
-          <div className=\"flex items-center gap-2\">
-            <Button variant=\"ghost\" size=\"sm\">
-              <Upload className=\"h-4 w-4 mr-2\" />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm">
+              <Upload className="h-4 w-4 mr-2" />
               Docs
             </Button>
-            <Button variant=\"ghost\" size=\"sm\">
-              <Settings className=\"h-4 w-4\" />
+            <Button variant="ghost" size="sm">
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
 
       {/* Agent Selection */}
-      <div className=\"bg-white border-b border-gray-200 p-4\">
-        <div className=\"max-w-4xl mx-auto\">
-          <div className=\"flex items-center gap-2 mb-3\">
-            <span className=\"text-sm font-medium text-gray-700\">Parler avec :</span>
+      <div className="bg-gray-900/30 border-b border-gray-800 p-4 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm font-medium text-gray-300">Parler avec :</span>
           </div>
 
-          <div className=\"grid grid-cols-2 gap-3\">
+          <div className="grid grid-cols-2 gap-3">
             {(['plume', 'mimir'] as Agent[]).map((agent) => {
               const info = getAgentInfo(agent)
               const Icon = info.icon
@@ -279,19 +278,19 @@ export default function ChatPage() {
                   onClick={() => setSelectedAgent(agent)}
                   className={`
                     p-3 rounded-lg border-2 transition-all text-left
-                    \${isSelected
-                      ? 'border-purple-300 bg-purple-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                    ${isSelected
+                      ? 'border-plume-500/50 bg-plume-500/10'
+                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
                     }
                   `}
                 >
-                  <div className=\"flex items-center gap-3\">
-                    <div className={`p-2 rounded-full \${info.bgColor}`}>
-                      <Icon className={`h-4 w-4 \${info.color}`} />
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${info.bgColor}`}>
+                      <Icon className={`h-4 w-4 ${info.color}`} />
                     </div>
                     <div>
-                      <div className=\"font-medium text-gray-900\">{info.name}</div>
-                      <div className=\"text-xs text-gray-500\">{info.description}</div>
+                      <div className="font-medium text-gray-100">{info.name}</div>
+                      <div className="text-xs text-gray-400">{info.description}</div>
                     </div>
                   </div>
                 </button>
@@ -302,8 +301,8 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className=\"flex-1 overflow-y-auto p-4\">
-        <div className=\"max-w-4xl mx-auto space-y-4\">
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-4xl mx-auto space-y-4">
           {messages.map((message) => {
             const isUser = message.role === 'user'
             const agentInfo = !isUser ? getAgentInfo(message.role as Agent) : null
@@ -312,39 +311,39 @@ export default function ChatPage() {
             return (
               <div
                 key={message.id}
-                className={`flex items-start gap-3 \${isUser ? 'flex-row-reverse' : ''}`}
+                className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
                 <div className={`
                   flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-                  \${isUser
-                    ? 'bg-blue-500'
-                    : agentInfo?.bgColor || 'bg-gray-200'
+                  ${isUser
+                    ? 'bg-plume-500'
+                    : agentInfo?.bgColor || 'bg-gray-800'
                   }
                 `}>
                   {isUser ? (
-                    <User className=\"h-4 w-4 text-white\" />
+                    <User className="h-4 w-4 text-white" />
                   ) : AgentIcon ? (
-                    <AgentIcon className={`h-4 w-4 \${agentInfo?.color}`} />
+                    <AgentIcon className={`h-4 w-4 ${agentInfo?.color}`} />
                   ) : null}
                 </div>
 
                 {/* Message bubble */}
                 <Card className={`
                   max-w-[80%] shadow-sm
-                  \${isUser ? 'bg-blue-500 text-white' : 'bg-white'}
+                  ${isUser ? 'bg-plume-500/20 border-plume-500/30' : 'bg-gray-800/50 border-gray-700'}
                 `}>
-                  <CardContent className=\"p-3\">
+                  <CardContent className="p-3">
                     {message.isLoading ? (
-                      <div className=\"flex items-center gap-2 text-gray-500\">
-                        <Loader2 className=\"h-4 w-4 animate-spin\" />
-                        <span className=\"text-sm\">{agentInfo?.name} réfléchit...</span>
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">{agentInfo?.name} réfléchit...</span>
                       </div>
                     ) : (
                       <div
-                        className=\"text-sm whitespace-pre-wrap\"
+                        className={`text-sm whitespace-pre-wrap ${isUser ? 'text-plume-50' : 'text-gray-200'}`}
                         dangerouslySetInnerHTML={{
-                          __html: message.content.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
+                          __html: message.content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                         }}
                       />
                     )}
@@ -352,7 +351,7 @@ export default function ChatPage() {
                 </Card>
 
                 {/* Timestamp */}
-                <div className=\"text-xs text-gray-400 mt-2 min-w-fit\">
+                <div className="text-xs text-gray-500 mt-2 min-w-fit">
                   {message.timestamp.toLocaleTimeString('fr-FR', {
                     hour: '2-digit',
                     minute: '2-digit'
@@ -366,50 +365,50 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className=\"bg-white border-t border-gray-200 p-4\">
-        <div className=\"max-w-4xl mx-auto\">
+      <div className="bg-gray-900/50 border-t border-gray-800 p-4 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto">
 
           {/* Selected agent indicator */}
-          <div className=\"flex items-center gap-2 mb-3\">
-            <div className={`p-1.5 rounded-full \${selectedAgentInfo.bgColor}`}>
-              <selectedAgentInfo.icon className={`h-3 w-3 \${selectedAgentInfo.color}`} />
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`p-1.5 rounded-full ${selectedAgentInfo.bgColor}`}>
+              <selectedAgentInfo.icon className={`h-3 w-3 ${selectedAgentInfo.color}`} />
             </div>
-            <span className=\"text-sm text-gray-600\">
-              Message pour <strong>{selectedAgentInfo.name}</strong>
+            <span className="text-sm text-gray-400">
+              Message pour <strong className="text-gray-200">{selectedAgentInfo.name}</strong>
             </span>
           </div>
 
-          <div className=\"flex items-end gap-2\">
+          <div className="flex items-end gap-2">
 
             {/* Voice Recording Button */}
             <Button
-              variant={isRecording ? \"destructive\" : \"outline\"}
-              size=\"icon\"
+              variant={isRecording ? "destructive" : "outline"}
+              size="icon"
               onClick={toggleRecording}
-              className=\"flex-shrink-0\"
+              className="flex-shrink-0"
             >
               {isRecording ? (
-                <MicOff className=\"h-4 w-4\" />
+                <MicOff className="h-4 w-4" />
               ) : (
-                <Mic className=\"h-4 w-4\" />
+                <Mic className="h-4 w-4" />
               )}
             </Button>
 
             {/* Text Input */}
-            <div className=\"flex-1 relative\">
+            <div className="flex-1 relative">
               <Textarea
                 ref={textareaRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={`Écris ton message pour ${selectedAgentInfo.name}...`}
-                className=\"min-h-[44px] max-h-32 resize-none pr-12\"
+                className="min-h-[44px] max-h-32 resize-none pr-12"
                 rows={1}
               />
 
               {/* Character counter */}
               {inputText.length > 0 && (
-                <div className=\"absolute bottom-2 right-2 text-xs text-gray-400\">
+                <div className="absolute bottom-2 right-2 text-xs text-gray-500">
                   {inputText.length}
                 </div>
               )}
@@ -419,20 +418,20 @@ export default function ChatPage() {
             <Button
               onClick={sendMessage}
               disabled={!inputText.trim() || isLoading}
-              className=\"flex-shrink-0\"
+              className="flex-shrink-0"
             >
               {isLoading ? (
-                <Loader2 className=\"h-4 w-4 animate-spin\" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className=\"h-4 w-4\" />
+                <Send className="h-4 w-4" />
               )}
             </Button>
           </div>
 
           {/* Input hints */}
-          <div className=\"mt-2 text-xs text-gray-500 text-center\">
-            <kbd className=\"px-2 py-1 bg-gray-100 rounded text-xs\">Enter</kbd> pour envoyer •
-            <kbd className=\"px-2 py-1 bg-gray-100 rounded text-xs ml-1\">Shift+Enter</kbd> pour nouvelle ligne
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Enter</kbd> pour envoyer •
+            <kbd className="px-2 py-1 bg-gray-800 rounded text-xs ml-1">Shift+Enter</kbd> pour nouvelle ligne
           </div>
         </div>
       </div>
