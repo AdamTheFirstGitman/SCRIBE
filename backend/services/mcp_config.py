@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
-from backend.utils.logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger("mcp_config")
 

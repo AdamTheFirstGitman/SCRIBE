@@ -12,15 +12,15 @@ from typing import Dict, Any, List
 import json
 
 # Import des modules SCRIBE
-from backend.services.render_mcp_monitor import (
+from services.render_mcp_monitor import (
     RenderMCPMonitor,
     SCRIBE_FRONTEND_SERVICE,
     LogLevel,
     AlertType,
     AlertEvent
 )
-from backend.services.mcp_config import create_scribe_mcp_config, test_mcp_connectivity
-from backend.utils.logger import get_logger
+from services.mcp_config import create_scribe_mcp_config, test_mcp_connectivity
+from utils.logger import get_logger
 
 logger = get_logger("surveillance_test")
 

@@ -14,15 +14,15 @@ import json
 from pathlib import Path
 
 # Import des modules SCRIBE
-from backend.services.render_mcp_monitor import (
+from services.render_mcp_monitor import (
     RenderMCPMonitor,
     SCRIBE_FRONTEND_SERVICE,
     setup_scribe_monitoring,
     AlertEvent,
     AlertType
 )
-from backend.services.mcp_config import create_scribe_mcp_config, test_mcp_connectivity
-from backend.utils.logger import get_logger, CostLogger
+from services.mcp_config import create_scribe_mcp_config, test_mcp_connectivity
+from utils.logger import get_logger, CostLogger
 
 logger = get_logger("scribe_surveillance")
 cost_logger = CostLogger()

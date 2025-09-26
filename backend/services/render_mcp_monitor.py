@@ -15,7 +15,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 # Import du logger configuré
-from backend.utils.logger import get_logger, PerformanceLogger
+from utils.logger import get_logger, PerformanceLogger
 
 logger = get_logger("render_mcp_monitor")
 perf_logger = PerformanceLogger()
