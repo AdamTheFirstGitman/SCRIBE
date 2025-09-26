@@ -69,12 +69,8 @@ const nextConfig = {
 
   // Experimental features
   experimental: {
-    // Enable app directory (Next.js 13+)
-    appDir: true,
     // Enable server components logging
     serverComponentsExternalPackages: ['@supabase/supabase-js'],
-    // Optimize fonts
-    optimizeFonts: true,
     // Enable modern bundling
     esmExternals: true,
   },

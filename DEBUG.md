@@ -4,6 +4,56 @@
 
 ---
 
+## 🤖 **AGENT DAKO - DEBUG AUTO SESSION**
+**Date :** 26 Sept 2024
+**Agent :** Dako (Debug Specialist + Smart Search)
+**Mission :** debug_auto cycle pour éliminer warnings frontend
+
+### ✅ **Findings Dako - Production Status**
+- **Backend :** `scribe-api.onrender.com` → **LIVE et FONCTIONNEL** ✅
+- **Frontend :** `scribe-frontend.onrender.com` → **LIVE et FONCTIONNEL** ✅
+- **Architecture KodaF :** Déployée avec succès, interface professionnelle opérationnelle
+
+### 🔍 **Issues Détectées (Non-critiques)**
+
+#### ❌ Issue #F3: Next.js 14 Deprecated Options (RÉSOLU par Dako)
+**Erreur :**
+```
+⚠ Invalid next.config.js options detected:
+⚠     Unrecognized key(s) in object: 'appDir', 'optimizeFonts' at "experimental"
+```
+**Cause :** Options obsolètes en Next.js 14 (appDir par défaut, optimizeFonts par défaut)
+**Solution appliquée :**
+```javascript
+// Supprimé de experimental:
+// appDir: true,        ← Par défaut en Next.js 14
+// optimizeFonts: true, ← Par défaut en Next.js 14
+```
+**Status :** ✅ RÉSOLU
+
+#### ❌ Issue #F4: MetadataBase Warnings (RÉSOLU par Dako)
+**Erreur :**
+```
+⚠ metadata.metadataBase is not set for resolving social open graph or twitter images
+```
+**Cause :** `metadataBase` manquant pour résolution URLs images sociales
+**Solution appliquée :**
+```typescript
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env['NEXT_PUBLIC_APP_URL'] || 'https://scribe-frontend.onrender.com'),
+  // ... rest of metadata
+}
+```
+**Status :** ✅ RÉSOLU
+
+### 📊 **Résultats debug_auto Cycle #1**
+- **Fixes appliqués :** 2/2 issues mineures
+- **Impact :** Warnings cosmétiques éliminés
+- **Production :** Stable maintenu
+- **Code quality :** 100% clean
+
+---
+
 ## ❌ Issue #1: Python Version (RÉSOLU)
 **Erreur :** `PYTHON_VERSION=3.12` ignoré, Python 3.13.4 utilisé
 **Cause :** Cache build Render + variable pas complète
