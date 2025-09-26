@@ -273,13 +273,15 @@ Terminal 3: Dako Debug (Smart search + debug_auto)
 
 - **Backend Debug :** Voir `DEBUG.md` (13 issues résolues ✅ - scribe-api LIVE)
 - **Frontend Debug :** Voir `FRONTEND_DEBUG.md` (2 issues + Alex enhancement ✅ - scribe-frontend LIVE)
+- **Render Deploy :** Voir `RENDER_DEBUG_PROTOCOLS.md` (20+ deploy cycles → protocols ✅)
 - **Agent Delegation :** Voir `FRONTEND_ENHANCEMENT_AGENT.md` (KodaF mission brief ✅)
 - **Debug Automation :** Voir `BACKEND_DEBUG_AGENT.md` (Dako mission brief + debug_auto)
 - **Agent Smart Systems :** Voir `AGENTS_RAG_CONFIG.md` (KodaF RAG + Dako Smart Search)
 
 **Deployment Status FINAL :**
 - 🚀 **Backend Production :** scribe-api.onrender.com LIVE
-- 🚀 **Frontend Production :** scribe-frontend.onrender.com LIVE
+- 🚀 **Frontend Production :** scribe-frontend-qk6s.onrender.com LIVE ✅
+- 📚 **Debug Protocols :** Documented patterns pour futurs projets
 - ⭐ **UI Enhancement :** Interface professionnelle complète
 - 📊 **Debug Expertise :** 15+ issues résolues méthodiquement
 
