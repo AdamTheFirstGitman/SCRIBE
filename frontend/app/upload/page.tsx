@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadDocument, type DocumentResponse } from '@/lib/api/upload'
+import { OfflineUtils } from '@/lib/offline'
 
 interface ProcessedDocument {
   id: string
@@ -48,6 +49,21 @@ export default function UploadPage() {
   const [viewMode, setViewMode] = useState<'text' | 'html'>('text')
   const [customTitle, setCustomTitle] = useState('')
   const [customTags, setCustomTags] = useState('')
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+
+  // Handle network status changes
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   // Drag & drop handling
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -77,6 +93,25 @@ export default function UploadPage() {
     setIsUploading(true)
 
     try {
+      if (!isOnline) {
+        // Handle offline upload
+        for (const file of uploadedFiles) {
+          const title = customTitle || file.name.replace(/\.[^/.]+$/, '')
+          const tags = customTags.split(',').map(tag => tag.trim()).filter(Boolean)
+
+          await OfflineUtils.handleOfflineUpload(file, title, tags)
+        }
+
+        // Clear upload queue
+        setUploadedFiles([])
+        setCustomTitle('')
+        setCustomTags('')
+
+        toast.success(`${uploadedFiles.length} fichier(s) sauvé(s) pour synchronisation`)
+        return
+      }
+
+      // Handle online upload
       const results = await Promise.all(
         uploadedFiles.map(async (file) => {
           const formData = new FormData()
@@ -237,20 +272,37 @@ export default function UploadPage() {
                     </div>
                   ))}
 
+                  {/* Offline indicator */}
+                  {!isOnline && (
+                    <div className="p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-yellow-400">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">Mode hors ligne</span>
+                      </div>
+                      <p className="text-yellow-300 text-xs mt-1">
+                        Les fichiers seront sauvegardés et synchronisés automatiquement lors de la reconnexion.
+                      </p>
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleUpload}
                     disabled={isUploading}
-                    className=\"w-full bg-purple-600 hover:bg-purple-700\"
+                    className={`w-full ${
+                      isOnline
+                        ? 'bg-purple-600 hover:bg-purple-700'
+                        : 'bg-yellow-600 hover:bg-yellow-700'
+                    }`}
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 className=\"h-4 w-4 mr-2 animate-spin\" />
-                        Traitement en cours...
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isOnline ? 'Traitement en cours...' : 'Sauvegarde...'}
                       </>
                     ) : (
                       <>
-                        <Upload className=\"h-4 w-4 mr-2\" />
-                        Traiter les fichiers
+                        <Upload className="h-4 w-4 mr-2" />
+                        {isOnline ? 'Traiter les fichiers' : 'Sauvegarder pour plus tard'}
                       </>
                     )}
                   </Button>

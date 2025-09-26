@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { PWAInstallPrompt } from '@/components/pwa/InstallPrompt'
+import OfflineStatus from '@/components/OfflineStatus'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -127,19 +128,35 @@ export default function RootLayout({
 
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />
+
+          {/* Offline Status Indicator */}
+          <OfflineStatus />
         </Providers>
 
         {/* Service Worker Registration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+              if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js')
                   .then(function(registration) {
-                    console.log('SW registered: ', registration);
+                    console.log('Service Worker enregistré');
+
+                    // Update available
+                    registration.addEventListener('updatefound', () => {
+                      const newWorker = registration.installing;
+                      newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                          // Show update notification
+                          if (confirm('Nouvelle version disponible. Actualiser ?')) {
+                            window.location.reload();
+                          }
+                        }
+                      });
+                    });
                   })
                   .catch(function(registrationError) {
-                    console.log('SW registration failed: ', registrationError);
+                    console.log('Échec enregistrement SW:', registrationError);
                   });
               }
             `,

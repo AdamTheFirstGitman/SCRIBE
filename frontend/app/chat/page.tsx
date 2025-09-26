@@ -18,6 +18,7 @@ import {
   Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { OfflineUtils } from '@/lib/offline'
 
 // Types
 type Agent = 'plume' | 'mimir'
@@ -52,10 +53,25 @@ export default function ChatPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent>('plume')
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Handle network status changes
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -98,7 +114,47 @@ export default function ChatPage() {
     setMessages(prev => [...prev, loadingMessage])
 
     try {
-      // Simulate API call to agent
+      if (!isOnline) {
+        // Handle offline message - store for later sync
+        await OfflineUtils.storage.init()
+        const offlineMessage = {
+          id: Date.now().toString(),
+          text: currentInput,
+          agent: selectedAgent,
+          timestamp: Date.now(),
+          retries: 0
+        }
+
+        // Store in IndexedDB
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const request = indexedDB.open('scribe-offline', 1)
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+
+        const transaction = db.transaction(['pendingMessages'], 'readwrite')
+        const store = transaction.objectStore('pendingMessages')
+        await new Promise((resolve, reject) => {
+          const request = store.add(offlineMessage)
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+
+        // Remove loading message and add offline response
+        setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
+        const offlineResponseMessage: ChatMessage = {
+          id: `offline-${Date.now()}`,
+          role: selectedAgent,
+          content: `📴 Message sauvegardé hors ligne. Il sera envoyé dès la reconnexion.`,
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, offlineResponseMessage])
+
+        toast.info('Message sauvegardé pour synchronisation')
+        return
+      }
+
+      // Online - simulate API call to agent
       await simulateAgentResponse(currentInput, selectedAgent, loadingMessage.id)
     } catch (error) {
       console.error('Chat error:', error)
