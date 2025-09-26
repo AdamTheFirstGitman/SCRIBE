@@ -6,7 +6,7 @@ gunicorn==21.2.0
 
 # LangGraph and AutoGen for agent orchestration
 langgraph==0.0.62
-pyautogen==0.2.2
+pyautogen==0.2.34
 langchain==0.1.0
 langchain-community==0.0.10
 
