@@ -20,6 +20,7 @@ ENV/
 
 # Build outputs
 .next/
+!.next/standalone/
 out/
 dist/
 build/
