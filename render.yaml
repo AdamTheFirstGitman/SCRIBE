@@ -14,9 +14,8 @@ services:
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
-    plan: hobby  # Inclus dans abonnement 19$/mois
+    plan: hobby
 
-    # Configuration Python
     pythonVersion: "3.11"
 
     # Santé et performance
@@ -93,9 +92,8 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
-    plan: hobby  # Inclus dans abonnement 19$/mois
+    plan: hobby
 
-    # Configuration Node.js
     nodeVersion: "18"
 
     # Variables d'environnement Frontend
