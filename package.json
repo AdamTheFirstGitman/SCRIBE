@@ -53,9 +53,6 @@
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.2"
   },
-  "workspaces": [
-    "frontend"
-  ],
   "config": {
     "frontend_port": 3000,
     "backend_port": 8000,
