@@ -210,6 +210,9 @@ AGENTS/
 - Versions flexibles requirements.txt (éviter conflits)
 - Imports absolus (pas relatifs) pour structure deployment
 - Build cache clearing pour changements majeurs
+- pydantic-settings 2.x : strings + propriétés list pour parsing arrays
+- Clés sécurité : defaults 64-char générées si variables manquantes
+- Jamais signer commits au nom de Claude, toujours utilisateur
 
 ---
 
