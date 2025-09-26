@@ -215,6 +215,8 @@ AGENTS/
 - Jamais signer commits au nom de Claude, toujours utilisateur
 - **TOUJOURS faire "maj" avant tout commit/push** (règle obligatoire)
 - Pydantic V2 : migration @validator → @field_validator + @classmethod + mode="before"
+- Script audit d'imports : automatiser détection modules manquants/mal importés
+- API placeholders : créer routes minimales pour éviter ModuleNotFoundError
 
 ---
 

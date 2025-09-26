@@ -15,18 +15,18 @@ import json
 import asyncio
 import time
 
-from services.agents.plume import PlumeAgent
-from services.agents.mimir import MimirAgent
-from services.conversation_manager import ConversationManager
-from database.supabase_client import get_supabase_client
-from config import get_settings
+from agents.plume import PlumeAgent
+from agents.mimir import MimirAgent
+# from services.conversation_manager import ConversationManager  # TODO: Create this service
+# from database.supabase_client import get_supabase_client  # TODO: Create this service
+from config import settings
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 # Initialize services
 plume_agent = PlumeAgent()
 mimir_agent = MimirAgent()
-conversation_manager = ConversationManager()
+# conversation_manager = ConversationManager()  # TODO: Implement
 
 # Models
 class ChatRequest(BaseModel):
