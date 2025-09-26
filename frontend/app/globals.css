@@ -1,0 +1,403 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
+
+@layer base {
+  :root {
+    /* Custom properties for dynamic theming */
+    --color-plume: 139 92 246;
+    --color-mimir: 5 150 105;
+    --color-background: 15 15 15;
+    --color-foreground: 249 250 251;
+
+    /* Animation durations */
+    --duration-fast: 150ms;
+    --duration-normal: 300ms;
+    --duration-slow: 500ms;
+
+    /* Spacing scale */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+
+    /* Border radius scale */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+    --shadow-hard: 0 8px 24px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  * {
+    @apply border-gray-200/10;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-50;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-plume-500/50 ring-offset-2 ring-offset-gray-950;
+  }
+
+  /* Selection styles */
+  ::selection {
+    @apply bg-plume-500/30 text-plume-50;
+  }
+
+  ::-moz-selection {
+    @apply bg-plume-500/30 text-plume-50;
+  }
+
+  /* Hide scrollbars by default */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom thin scrollbars */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.5);
+  }
+}
+
+/* =============================================================================
+   COMPONENT STYLES
+   ============================================================================= */
+
+@layer components {
+  /* Button variants */
+  .btn-primary {
+    @apply bg-plume-500 text-white hover:bg-plume-600 focus:bg-plume-600;
+    @apply transition-colors duration-200;
+    @apply font-medium px-4 py-2 rounded-lg;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-800 text-gray-200 hover:bg-gray-700 focus:bg-gray-700;
+    @apply border border-gray-600 hover:border-gray-500;
+    @apply transition-all duration-200;
+    @apply font-medium px-4 py-2 rounded-lg;
+  }
+
+  .btn-ghost {
+    @apply text-gray-300 hover:text-white hover:bg-gray-800/50;
+    @apply transition-all duration-200;
+    @apply font-medium px-4 py-2 rounded-lg;
+  }
+
+  /* Input styles */
+  .input-primary {
+    @apply bg-gray-900/50 border border-gray-700 text-gray-50;
+    @apply placeholder:text-gray-400;
+    @apply focus:border-plume-500 focus:ring-1 focus:ring-plume-500/50;
+    @apply transition-all duration-200;
+    @apply rounded-lg px-3 py-2;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-gray-900/50 border border-gray-800 rounded-xl;
+    @apply backdrop-blur-sm;
+    @apply shadow-soft;
+  }
+
+  .card-hover {
+    @apply card hover:border-gray-700 hover:shadow-medium;
+    @apply transition-all duration-300;
+    @apply cursor-pointer;
+  }
+
+  /* Message bubbles */
+  .message-user {
+    @apply bg-plume-500/20 border border-plume-500/30 text-plume-50;
+    @apply rounded-2xl rounded-br-md px-4 py-3;
+    @apply ml-8 max-w-xs sm:max-w-md;
+    @apply shadow-soft;
+  }
+
+  .message-plume {
+    @apply bg-plume-500/10 border border-plume-500/20 text-gray-50;
+    @apply rounded-2xl rounded-bl-md px-4 py-3;
+    @apply mr-8 max-w-xs sm:max-w-md;
+    @apply shadow-soft;
+  }
+
+  .message-mimir {
+    @apply bg-mimir-500/10 border border-mimir-500/20 text-gray-50;
+    @apply rounded-2xl rounded-bl-md px-4 py-3;
+    @apply mr-8 max-w-xs sm:max-w-md;
+    @apply shadow-soft;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply bg-emerald-500 shadow-lg shadow-emerald-500/30;
+  }
+
+  .status-processing {
+    @apply bg-amber-500 shadow-lg shadow-amber-500/30;
+    @apply animate-pulse;
+  }
+
+  .status-offline {
+    @apply bg-gray-500 shadow-lg shadow-gray-500/30;
+  }
+
+  /* Glass morphism effects */
+  .glass {
+    @apply backdrop-blur-md bg-white/5 border border-white/10;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20;
+  }
+
+  /* Loading skeletons */
+  .skeleton {
+    @apply bg-gray-800/50 animate-pulse rounded;
+  }
+
+  /* Voice recording animation */
+  .recording-pulse {
+    @apply animate-recording;
+    transform-origin: center;
+  }
+
+  /* Thinking dots animation */
+  .thinking-dot {
+    @apply w-2 h-2 bg-gray-400 rounded-full;
+    @apply animate-thinking;
+  }
+
+  .thinking-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .thinking-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+@layer utilities {
+  /* Text balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Safe area support for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  /* Custom animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-plume {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  }
+
+  .bg-gradient-mimir {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+  }
+
+  /* Typography utilities */
+  .text-gradient-plume {
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-mimir {
+    background: linear-gradient(135deg, #059669, #34D399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Recording animation */
+@keyframes recording {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Thinking dots animation */
+@keyframes thinking {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+/* Mobile-first approach */
+@media (max-width: 640px) {
+  .message-user,
+  .message-plume,
+  .message-mimir {
+    @apply mx-4 max-w-none;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) {
+  /* Adjust spacing for tablets */
+}
+
+/* Desktop optimizations */
+@media (min-width: 1024px) {
+  /* Larger screens get more spacing */
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Optimize for retina displays */
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode adjustments (default) */
+@media (prefers-color-scheme: dark) {
+  /* Already using dark theme by default */
+}
+
+/* Light mode (if user prefers light) */
+@media (prefers-color-scheme: light) {
+  /* Could add light theme overrides here if needed */
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+}
