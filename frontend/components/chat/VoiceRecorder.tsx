@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useRef, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
 import {
   Mic,
   Square,
@@ -11,7 +11,7 @@ import {
   VolumeX
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { transcribeAudio } from '@/lib/api/chat'
+import { transcribeAudio } from '../../lib/api/chat'
 
 interface VoiceRecorderProps {
   onTranscription: (text: string, confidence: number) => void
