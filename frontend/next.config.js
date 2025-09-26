@@ -51,13 +51,13 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
-  // Enable static export for deployment flexibility
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  // Use standalone for Render.com deployment
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 
-  // Disable image optimization for static export
+  // Enable image optimization for production
   images: {
-    unoptimized: process.env.NODE_ENV === 'production',
-    domains: [],
+    unoptimized: false,
+    domains: ['eytfiohvhlqokikemlfn.supabase.co'],
     formats: ['image/webp', 'image/avif'],
   },
 

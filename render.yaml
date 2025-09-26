@@ -1,0 +1,136 @@
+# Render.com Blueprint - SCRIBE Déploiement
+# 2 services séparés : Backend privé + Frontend public
+
+services:
+  # =============================================================================
+  # BACKEND SERVICE (PRIVÉ)
+  # =============================================================================
+  - type: web
+    name: scribe-api
+    runtime: python3
+    repo: https://github.com/adamdahan/SCRIBE.git
+    region: oregon
+    branch: main
+    rootDir: backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+    plan: hobby  # Inclus dans abonnement 19$/mois
+
+    # Configuration Python
+    pythonVersion: "3.11"
+
+    # Santé et performance
+    healthCheckPath: /health
+
+    # Variables d'environnement Backend
+    envVars:
+      # Supabase - À configurer dans Render Dashboard
+      - key: SUPABASE_URL
+        value: YOUR_SUPABASE_URL_HERE
+      - key: SUPABASE_ANON_KEY
+        value: YOUR_SUPABASE_ANON_KEY_HERE
+      - key: SUPABASE_SERVICE_KEY
+        value: YOUR_SUPABASE_SERVICE_KEY_HERE
+
+      # Database - À configurer dans Render Dashboard
+      - key: DATABASE_URL
+        value: YOUR_DATABASE_URL_HERE
+
+      # AI Services - À configurer dans Render Dashboard
+      - key: CLAUDE_API_KEY
+        value: YOUR_CLAUDE_API_KEY_HERE
+      - key: OPENAI_API_KEY
+        value: YOUR_OPENAI_API_KEY_HERE
+      - key: PERPLEXITY_API_KEY
+        value: YOUR_PERPLEXITY_API_KEY_HERE
+      - key: TAVILY_API_KEY
+        value: YOUR_TAVILY_API_KEY_HERE
+
+      # Application
+      - key: PYTHON_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: STRUCTURED_LOGGING
+        value: "true"
+
+      # Security - À configurer dans Render Dashboard
+      - key: JWT_SECRET
+        value: YOUR_JWT_SECRET_HERE
+      - key: SECRET_KEY
+        value: YOUR_SECRET_KEY_HERE
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: scribe-frontend
+          property: url
+
+      # Performance
+      - key: MAX_TOKENS_PLUME
+        value: "4000"
+      - key: MAX_TOKENS_MIMIR
+        value: "4000"
+      - key: TEMPERATURE_PLUME
+        value: "0.3"
+      - key: TEMPERATURE_MIMIR
+        value: "0.2"
+
+      # Rate Limiting
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
+      - key: RATE_LIMIT_PER_HOUR
+        value: "1000"
+
+  # =============================================================================
+  # FRONTEND SERVICE (PUBLIC)
+  # =============================================================================
+  - type: web
+    name: scribe-frontend
+    runtime: node
+    repo: https://github.com/adamdahan/SCRIBE.git
+    region: oregon
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: hobby  # Inclus dans abonnement 19$/mois
+
+    # Configuration Node.js
+    nodeVersion: "18"
+
+    # Variables d'environnement Frontend
+    envVars:
+      # Next.js
+      - key: NODE_ENV
+        value: production
+
+      # API Backend (référence interne Render)
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: scribe-api
+          property: url
+
+      # Supabase (public keys) - À configurer dans Render Dashboard
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: YOUR_SUPABASE_URL_HERE
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        value: YOUR_SUPABASE_ANON_KEY_HERE
+
+      # PWA Configuration
+      - key: NEXT_PUBLIC_PWA_ENABLED
+        value: "true"
+      - key: NEXT_PUBLIC_OFFLINE_SUPPORT
+        value: "true"
+
+# =============================================================================
+# DATABASES & SERVICES
+# =============================================================================
+# Note: On utilise Supabase hébergé, pas besoin de DB sur Render
+
+# =============================================================================
+# MONITORING & ALERTES
+# =============================================================================
+# - Health checks automatiques
+# - Notifications Slack/Discord configurables
+# - Métriques CPU/RAM/Trafic intégrées
