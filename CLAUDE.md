@@ -1,43 +1,69 @@
 # SCRIBE - Système Plume & Mimir
 
-## Configuration Projet
+## 🎯 CONFIGURATION CRITIQUE DÉPLOIEMENT
 
 *Système de gestion de connaissances avec agents IA intelligents*
 
-### Architecture Multi-Agents Opérationnelle ✅
+### ⚠️ PROBLÈMES RÉCURRENTS IDENTIFIÉS
 
-**Agents Principaux :**
-- **🖋️ Plume** - Agent restitution parfaite : capture, transcription, reformulation précise
-- **🧠 Mimir** - Agent archiviste : indexation, recherche RAG, connections méthodiques
-- **🎭 LangGraph Orchestrator** - Workflow intelligent : routing automatique, discussions agents
-- **🤝 AutoGen Integration** - Dialogues structurés entre agents pour qualité optimale
+**🔥 CAUSES MAJEURES NO-DEPLOY :**
+1. **Node.js version conflicts** (18.18.2 vs 20+ vs 23)
+2. **Next.js memory issues** (14.0.3 = crashes OOM)
+3. **Import alias @ failures** (build errors Render)
+4. **Git cache case sensitivity** (Linux vs local)
+5. **Render config syntax errors** (yaml malformed)
 
-**Agents de Build (Forge EMPYR) :**
-- **Leo** - Architecte principal, task decomposition hiérarchique
-- **Koda** - Codeur spécialisé patterns FastAPI/CRUD
-- **Gito** - Git MCP, gestion repositories
-- **KodaF** - Frontend specialist, UI/UX transformation professionnel ⭐
+### ✅ SOLUTIONS APPLIQUÉES
 
-### Architecture Technique Complète
+**Configuration Node.js FIXE :**
+- .nvmrc: `20.18.0`
+- package.json engines: `"node": "20.18.0"`
+- Next.js: `14.2.15` (memory fixes 2.2GB→<190MB)
 
-**Stack Frontend :**
-- NextJS 14 + App Router + TypeScript strict
-- PWA complète avec service worker avancé
-- **shadcn/ui + CVA Professional Design System** ⭐
-- **Interface mobile-first avec dark theme + animations fluides**
-- **Support offline + installation prompt PWA**
+**Imports RELATIFS (plus fiable) :**
+```typescript
+// ❌ ÉVITER - Cause build errors
+import { Button } from '@/components/ui/button'
 
-**Stack Backend :**
-- FastAPI + LangGraph + AutoGen
-- Architecture multi-agents avec state management
-- Services IA complets (transcription, embeddings, RAG)
-- Cache multi-niveaux optimisé
+// ✅ UTILISER - Fiable deployment
+import { Button } from '../../components/ui/button'
+```
 
-**Infrastructure Data :**
-- Supabase Pro + pgvector pour embeddings
-- PostgreSQL avec RLS et fonctions RPC
-- Redis Cloud pour cache haute performance
-- Realtime sync bidirectionnel
+**Render.yaml OPTIMISÉ :**
+```yaml
+services:
+  - type: web
+    name: scribe-frontend
+    env: node
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
+```
+
+### 🛠️ STACK TECHNIQUE
+
+**Frontend (Next.js 14.2.15) :**
+- PWA complète + TypeScript strict
+- Imports relatifs uniquement
+- Node.js 20.18.0 FIXE
+- PORT=10000, HOSTNAME=0.0.0.0
+
+**Backend (FastAPI) :**
+- Agents Plume + Mimir + LangGraph
+- Python 3.12.7 + pydantic-settings 2.x
+- Imports absolus agents.state
+
+**Deploy Render.com :**
+- rootDir: frontend
+- Build cache clear si échec
+- Git cache reset case sensitivity
 
 ### Services IA Intégrés
 

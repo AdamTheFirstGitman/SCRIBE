@@ -1,179 +1,55 @@
-# SCRIBE - Notes de Développement
+# =� NOTES SCRIBE - CONDENS�ES
 
-## État Actuel - Sept 2024
+## <� PROJET STATUS
 
-### ✅ Architecture Complète Opérationnelle
+**SCRIBE** = Syst�me agents IA (Plume + Mimir) pour gestion connaissances
+**Backend :**  LIVE `scribe-api.onrender.com`
+**Frontend :** L no-deploy persistant `scribe-frontend-qk6s.onrender.com`
 
-**Phase 1 & 2 Terminées :**
-- Infrastructure complète (Database, Backend, Frontend)
-- Agents IA intelligents (Plume, Mimir, LangGraph)
-- Services complets (Transcription, Embeddings, RAG)
-- Cache optimisé multi-niveaux
+## � PROBL�MES R�CURRENTS
 
-**Prêt pour Déploiement :**
-- Stack technique validé
-- Structure autonome complète
-- Agents de build intégrés (Leo/Koda/Gito)
-- Documentation exhaustive
+1. **Node.js version conflicts** (23.11.0 local vs 20.18.0 deploy)
+2. **Next.js memory crashes** (14.0.3 OOM � 14.2.15 fixes)
+3. **Import @ alias failures** � imports relatifs solution
+4. **Git cache case sensitivity** � reset cache obligatoire
+5. **Render config malformed** � yaml syntax critique
 
-### 🚀 Prochaines Étapes
+##  SOLUTIONS APPLIQU�ES
 
-**Phase 3 - Interface (Prioritaire) :**
-- [ ] Chat Interface vocal + textuel
-- [ ] Archives System avec recherche
-- [ ] PWA service worker avancé
+- **Node.js :** 20.18.0 fixe (.nvmrc + package.json)
+- **Next.js :** 14.2.15 (memory fixes Vercel)
+- **Imports :** Relatifs `../../components/ui/button`
+- **Render.yaml :** rootDir: frontend + PORT=10000
+- **Git cache :** `git rm -r --cached .` + recommit
 
-**Déploiement :**
-- [ ] Configuration Supabase Pro
-- [ ] Setup Redis Cloud
-- [ ] Déploiement Render + Vercel
-- [ ] Tests d'intégration complets
+## =' DEBUG TECHNIQUES
 
-### 📊 Métriques de Succès
+**Smart Search :** WebSearch + community patterns + GitHub issues
+**One error at a time :** R�soudre s�quentiellement
+**Local test first :** npm run build � deploy
+**Document everything :** DEBUG.md exhaustif
+**Think simple :** Out-of-the-box avant complex solutions
 
-**Performance Targets :**
-- FCP < 1s, TTI < 2s
-- API < 200ms, RAG < 500ms
-- Cache hit rate > 80%
-- Zero downtime deployment
+## =� DOCS ESSENTIELLES
 
-**Budget Respect :**
-- Infrastructure : 55-65€/mois ✓
-- APIs : 30-55€/mois selon usage
-- Total cible : 85-120€/mois
+- **CLAUDE.md :** Config projet optimis�e
+- **DEBUG.md :** 15+ solutions d�taill�es
+- **HANDOVER_PROMPT.md :** Guide nouvelle session
+- **ARCHIVES/ :** Docs agents d�taill�es
 
-### 🔧 Configuration Critique
+## =� DEPLOY HOOK
 
-**APIs Essentielles :**
-1. **Supabase** : Database + Realtime ✓
-2. **Claude API** : Agents principaux ✓
-3. **OpenAI** : Whisper + Embeddings ✓
-4. **Redis** : Cache performance ✓
+```bash
+curl -X POST "https://api.render.com/deploy/srv-d3b7s9odl3ps73964ieg?key=_pf1X8o6lPA"
+```
 
-**APIs Optionnelles :**
-- Perplexity : Recherche temps réel
-- Tavily : Web search externe
+## <� NEXT STEPS
 
-### 🏗️ Architecture Technique
-
-**Frontend NextJS 14 :**
-- PWA complète avec offline
-- TypeScript strict + Tailwind
-- Mobile-first responsive
-- Service worker intelligent
-
-**Backend FastAPI :**
-- LangGraph orchestration
-- Multi-agent workflows
-- Services IA intégrés
-- Cache optimisé
-
-**Data Layer :**
-- PostgreSQL + pgvector
-- Embeddings 1536 dimensions
-- RLS + audit logging
-- Realtime subscriptions
-
-### 🧠 Agents Spécialisés
-
-**Plume (Production) :**
-- Restitution parfaite
-- Reformulation précise
-- Cache intelligent
-- HTML enrichi
-
-**Mimir (Production) :**
-- RAG avancé
-- Recherche contextuelle
-- Synthèse multi-sources
-- Références précises
-
-**Leo/Koda/Gito (Build) :**
-- Développement futur
-- Maintenance système
-- Évolutions architecturales
-
-### 🔍 Points d'Attention
-
-**Sécurité :**
-- API keys bien protégées
-- RLS correctement configuré
-- Rate limiting adaptatif
-- Input validation stricte
-
-**Performance :**
-- Cache multi-niveaux optimisé
-- Embeddings batch processing
-- Requêtes SQL indexées
-- Token usage monitored
-
-**Coûts :**
-- Tracking temps réel
-- Alertes budget configurées
-- Optimisation continue
-- ROI performance validé
-
-### 🚀 Roadmap Évolution
-
-**Court Terme (1-2 mois) :**
-- Phase 3 complète
-- Déploiement production
-- Tests utilisateurs
-- Optimisations performance
-
-**Moyen Terme (3-6 mois) :**
-- Multi-language support
-- Fonctionnalités avancées
-- Intégrations externes
-- Scaling infrastructure
-
-**Long Terme (6-12 mois) :**
-- Multi-tenant architecture
-- Fine-tuning models
-- Agent marketplace
-- Monétisation API
-
-### 💡 Idées & Améliorations
-
-**UX/UI :**
-- Animations micro-interactions
-- Thèmes personnalisables
-- Raccourcis clavier
-- Mode focus/zen
-
-**Fonctionnalités :**
-- Export PDF/DOCX avancé
-- Collaboration temps réel
-- Intégrations calendar/email
-- Plugin système
-
-**Technique :**
-- WebAssembly optimizations
-- Edge computing
-- GraphQL API
-- Streaming responses
+1. **Diagnostic simple** : syntaxe, packages, limits Render
+2. **Test local** : build success mandatory
+3. **Deploy iterative** : commit � test � document
+4. **Success pattern** : reproduce solutions qui marchent
 
 ---
 
-## Journal de Développement
-
-### 26 Sept 2024 - Architecture Complète
-- ✅ LangGraph orchestrator avec decision trees
-- ✅ Agents Plume/Mimir avec prompts optimisés
-- ✅ Services IA complets (Whisper, Embeddings, RAG)
-- ✅ Cache multi-niveaux L1/L2/L3
-- ✅ Structure autonome pour extraction
-
-### Prochaine Session
-- 🔄 Interface chat vocal/textuel
-- 🔄 Archives system avec recherche
-- 🔄 Tests d'intégration complets
-- 🔄 Préparation déploiement production
-
----
-
-> **SCRIBE** est maintenant un système complet et autonome, prêt pour l'extraction et le déploiement indépendant.
->
-> L'architecture multi-agents avec LangGraph offre une base solide pour la gestion intelligente de connaissances.
->
-> — Leo, Architecte EMPYR
+*D�velopp� avec architecture multi-agents - Ready for handover*

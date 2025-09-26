@@ -1,13 +1,70 @@
-# 🐛 DEBUG JOURNAL - Render Deployment
+# 🐛 DEBUG JOURNAL EXHAUSTIF - Render Deployment
 
-## Issue Tracking Log pour déploiement SCRIBE sur Render.com
+## 🎯 GUIDE COMPLET OBSTACLES + SOLUTIONS + TECHNIQUES
 
----
+### 🚨 PROBLÈMES RÉCURRENTS NO-DEPLOY
 
-## 🤖 **AGENT DAKO - DEBUG AUTO SESSION**
-**Date :** 26 Sept 2024
-**Agent :** Dako (Debug Specialist + Smart Search)
-**Mission :** debug_auto cycle pour éliminer warnings frontend
+**🔥 CAUSES PRINCIPALES :**
+1. **Node.js version conflicts** (local 23 vs Render 18-20)
+2. **Next.js memory crashes** (14.0.3 = OOM 2.2GB vs 14.2.15 <190MB)
+3. **Import alias @ failures** (webpack resolution deployment)
+4. **Git cache case sensitivity** (Linux deployment vs local)
+5. **Render config malformed** (yaml syntax + env vars)
+
+### 🛠️ SOLUTIONS QUI MARCHENT
+
+#### ✅ **Fix Version Node.js**
+```bash
+# .nvmrc
+20.18.0
+
+# package.json
+"engines": {
+  "node": "20.18.0",
+  "npm": ">=10.0.0"
+}
+```
+
+#### ✅ **Fix Next.js Memory**
+```bash
+# Upgrade critique
+"next": "14.2.15"  # au lieu de 14.0.3
+"eslint-config-next": "14.2.15"
+```
+
+#### ✅ **Fix Imports Alias**
+```typescript
+// ❌ NE MARCHE PAS sur Render
+import { Button } from '@/components/ui/button'
+
+// ✅ SOLUTION FIABLE
+import { Button } from '../../components/ui/button'
+```
+
+#### ✅ **Fix Git Cache Case Sensitivity**
+```bash
+git rm -r --cached .
+git add --all .
+git commit -a -m "Fix case sensitivity"
+```
+
+#### ✅ **Fix Render.yaml Config**
+```yaml
+services:
+  - type: web
+    name: scribe-frontend
+    env: node
+    rootDir: frontend  # CRITIQUE
+    buildCommand: npm ci && npm run build
+    startCommand: npm start  # pas node .next/standalone
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"  # CRITIQUE Render
+      - key: HOSTNAME
+        value: "0.0.0.0"  # CRITIQUE Render
+```
 
 ### ✅ **Findings Dako - Production Status**
 - **Backend :** `scribe-api.onrender.com` → **LIVE et FONCTIONNEL** ✅
