@@ -13,10 +13,10 @@ import re
 from openai import AsyncOpenAI
 import numpy as np
 
-from ..config import settings
-from ..services.cache import cache_manager
-from ..services.storage import supabase_client
-from ..utils.logger import get_logger, performance_logger, cost_logger
+from config import settings
+from services.cache import cache_manager
+from services.storage import supabase_client
+from utils.logger import get_logger, performance_logger, cost_logger
 
 logger = get_logger(__name__)
 

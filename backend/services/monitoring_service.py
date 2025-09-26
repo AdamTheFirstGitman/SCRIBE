@@ -12,8 +12,8 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
 import json
 
-from ..database.supabase_client import get_supabase_client
-from ..config import get_settings
+from database.supabase_client import get_supabase_client
+from config import get_settings
 
 @dataclass
 class SystemMetrics:

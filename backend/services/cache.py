@@ -15,8 +15,8 @@ from collections import OrderedDict
 import pickle
 import redis.asyncio as redis
 
-from ..config import settings
-from ..utils.logger import get_logger, performance_logger
+from config import settings
+from utils.logger import get_logger, performance_logger
 
 logger = get_logger(__name__)
 

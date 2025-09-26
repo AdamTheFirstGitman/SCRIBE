@@ -14,9 +14,9 @@ import os
 
 from openai import AsyncOpenAI
 
-from ..config import settings
-from ..services.cache import cache_manager
-from ..utils.logger import get_logger, performance_logger, cost_logger
+from config import settings
+from services.cache import cache_manager
+from utils.logger import get_logger, performance_logger, cost_logger
 
 logger = get_logger(__name__)
 

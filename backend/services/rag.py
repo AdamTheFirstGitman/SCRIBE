@@ -9,11 +9,11 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import hashlib
 
-from ..config import settings
-from ..services.embeddings import embedding_service
-from ..services.storage import supabase_client
-from ..services.cache import cache_manager
-from ..utils.logger import get_logger, performance_logger
+from config import settings
+from services.embeddings import embedding_service
+from services.storage import supabase_client
+from services.cache import cache_manager
+from utils.logger import get_logger, performance_logger
 
 logger = get_logger(__name__)
 

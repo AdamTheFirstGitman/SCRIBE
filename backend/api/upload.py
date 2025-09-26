@@ -11,10 +11,10 @@ from pathlib import Path
 import asyncio
 from datetime import datetime
 
-from ..services.document_processor import DocumentProcessor
-from ..services.embedding_service import EmbeddingService
-from ..database.supabase_client import get_supabase_client
-from ..models.document import DocumentResponse, DocumentCreate, ProcessingStatus
+from services.document_processor import DocumentProcessor
+from services.embedding_service import EmbeddingService
+from database.supabase_client import get_supabase_client
+from models.document import DocumentResponse, DocumentCreate, ProcessingStatus
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 

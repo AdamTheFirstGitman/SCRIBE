@@ -15,9 +15,9 @@ except ImportError:
     # Fallback if autogen is not available
     autogen = None
 
-from .state import AgentState
-from ..config import settings
-from ..utils.logger import get_agent_logger, cost_logger
+from state import AgentState
+from config import settings
+from utils.logger import get_agent_logger, cost_logger
 
 logger = get_agent_logger("autogen")
 
@@ -378,8 +378,8 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
 
         try:
             # Import agents
-            from .plume import plume_agent
-            from .mimir import mimir_agent
+            from plume import plume_agent
+            from mimir import mimir_agent
 
             start_time = time.time()
             messages = []

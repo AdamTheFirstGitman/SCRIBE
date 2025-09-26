@@ -15,11 +15,11 @@ import json
 import asyncio
 import time
 
-from ..services.agents.plume import PlumeAgent
-from ..services.agents.mimir import MimirAgent
-from ..services.conversation_manager import ConversationManager
-from ..database.supabase_client import get_supabase_client
-from ..config import get_settings
+from services.agents.plume import PlumeAgent
+from services.agents.mimir import MimirAgent
+from services.conversation_manager import ConversationManager
+from database.supabase_client import get_supabase_client
+from config import get_settings
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 

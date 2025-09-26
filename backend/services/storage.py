@@ -11,8 +11,8 @@ import asyncio
 from supabase import create_client, Client
 from supabase.lib.client_options import ClientOptions
 
-from ..config import settings
-from ..utils.logger import get_logger, performance_logger
+from config import settings
+from utils.logger import get_logger, performance_logger
 
 logger = get_logger(__name__)
 

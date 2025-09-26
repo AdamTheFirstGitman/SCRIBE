@@ -18,7 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
 import redis.asyncio as redis
 
-from ..config import get_settings
+from config import get_settings
 
 class PerformanceMiddleware(BaseHTTPMiddleware):
     """

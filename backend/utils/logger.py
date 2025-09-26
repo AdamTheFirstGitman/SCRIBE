@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 import json
 
-from ..config import settings
+from config import settings
 
 def setup_logging():
     """Configure structured logging for the application"""

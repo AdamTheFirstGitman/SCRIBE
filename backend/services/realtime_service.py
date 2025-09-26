@@ -11,8 +11,8 @@ import logging
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from ..database.supabase_client import get_supabase_client
-from ..config import get_settings
+from database.supabase_client import get_supabase_client
+from config import get_settings
 
 logger = logging.getLogger(__name__)
 

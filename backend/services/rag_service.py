@@ -13,9 +13,9 @@ import numpy as np
 import httpx
 from collections import defaultdict
 
-from .embedding_service import EmbeddingService
-from ..database.supabase_client import get_supabase_client
-from ..config import get_settings
+from embedding_service import EmbeddingService
+from database.supabase_client import get_supabase_client
+from config import get_settings
 
 @dataclass
 class SearchResult:

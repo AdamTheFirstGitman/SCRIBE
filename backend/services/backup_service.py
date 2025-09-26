@@ -18,8 +18,8 @@ from cryptography.fernet import Fernet
 import boto3
 from botocore.exceptions import ClientError
 
-from ..database.supabase_client import get_supabase_client
-from ..config import get_settings
+from database.supabase_client import get_supabase_client
+from config import get_settings
 
 @dataclass
 class BackupRecord:

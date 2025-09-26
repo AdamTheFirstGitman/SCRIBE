@@ -8,11 +8,11 @@ import time
 import asyncio
 from datetime import datetime
 
-from ..models.schemas import HealthCheck, DetailedHealthCheck
-from ..config import settings
-from ..services.storage import supabase_client
-from ..services.cache import cache_manager
-from ..utils.logger import get_logger
+from models.schemas import HealthCheck, DetailedHealthCheck
+from config import settings
+from services.storage import supabase_client
+from services.cache import cache_manager
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()

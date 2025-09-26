@@ -12,7 +12,7 @@ import json
 import numpy as np
 from datetime import datetime, timedelta
 import os
-from ..config import get_settings
+from config import get_settings
 
 class EmbeddingService:
     """

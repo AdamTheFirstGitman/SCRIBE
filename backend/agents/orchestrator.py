@@ -11,13 +11,13 @@ from datetime import datetime
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 
-from .state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
-from ..services.transcription import transcription_service
-from ..services.embeddings import embedding_service
-from ..services.rag import rag_service
-from ..services.storage import supabase_client
-from ..services.cache import cache_manager
-from ..utils.logger import get_agent_logger, get_logger
+from state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
+from services.transcription import transcription_service
+from services.embeddings import embedding_service
+from services.rag import rag_service
+from services.storage import supabase_client
+from services.cache import cache_manager
+from utils.logger import get_agent_logger, get_logger
 
 logger = get_logger(__name__)
 
@@ -278,7 +278,7 @@ class PlumeOrchestrator:
         add_processing_step(state, "plume_processing")
 
         try:
-            from .plume import plume_agent
+            from plume import plume_agent
             input_text = state.get("input", "")
 
             start_time = time.time()
@@ -313,7 +313,7 @@ class PlumeOrchestrator:
         add_processing_step(state, "mimir_processing")
 
         try:
-            from .mimir import mimir_agent
+            from mimir import mimir_agent
             input_text = state.get("input", "")
             context = state.get("context", [])
 
@@ -349,7 +349,7 @@ class PlumeOrchestrator:
         add_processing_step(state, "autogen_discussion")
 
         try:
-            from .autogen_agents import run_discussion
+            from autogen_agents import run_discussion
             input_text = state.get("input", "")
             context = state.get("context", [])
 
@@ -561,7 +561,7 @@ class PlumeOrchestrator:
             await self.initialize()
 
         # Create initial state
-        from .state import create_initial_state
+        from state import create_initial_state
         initial_state = create_initial_state(
             input_text=input_text,
             mode=mode,
