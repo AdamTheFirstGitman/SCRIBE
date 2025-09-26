@@ -38,8 +38,16 @@ class Settings(BaseSettings):
     # =============================================================================
     # SECURITY SETTINGS
     # =============================================================================
-    SECRET_KEY: str = Field(..., env="SECRET_KEY", min_length=32)
-    JWT_SECRET: str = Field(..., env="JWT_SECRET", min_length=32)
+    SECRET_KEY: str = Field(
+        default="ag9r5NDYFPERqQkr1ydh7q3sxDy_wXm8DmJmtkb9EIjXXhk5dcNc1hVhTgSwAVdZ",
+        env="SECRET_KEY",
+        min_length=32
+    )
+    JWT_SECRET: str = Field(
+        default="GihHv0s-XDHQ50JymFHqjn7_LChjpFu37HU5Pb_fjQ8RQg-ZHwvOcTvvmr4rIZDW",
+        env="JWT_SECRET",
+        min_length=32
+    )
     ALLOWED_HOSTS: str = Field(
         default="localhost,127.0.0.1,0.0.0.0",
         env="ALLOWED_HOSTS"
@@ -191,6 +199,14 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             if v.strip() == "":
                 return "webm,mp3,wav,m4a,ogg"
+        return v
+
+    @validator("SECRET_KEY", "JWT_SECRET", pre=True)
+    def validate_secrets(cls, v, field):
+        if v in ["YOUR_SECRET_KEY_HERE", "YOUR_JWT_SECRET_HERE"] or len(v) < 32:
+            # Generate a secure 32+ char key if placeholder or too short
+            import secrets
+            return secrets.token_urlsafe(32)
         return v
 
     @validator("TEMPERATURE_PLUME", "TEMPERATURE_MIMIR")
