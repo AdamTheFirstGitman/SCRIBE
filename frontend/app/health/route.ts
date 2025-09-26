@@ -8,7 +8,7 @@ export async function GET() {
         status: 'healthy',
         service: 'scribe-frontend',
         timestamp: new Date().toISOString(),
-        build: 'optimized-v2',
+        build: 'typescript-fixed-v3',
         version: '1.0.0',
         environment: process.env.NODE_ENV || 'development'
       },
