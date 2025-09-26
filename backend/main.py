@@ -16,11 +16,11 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 
-from .config import settings
-from .utils.logger import setup_logging, get_logger
-from .api import chat, archive, search, health
-from .services.cache import cache_manager
-from .services.storage import supabase_client
+from config import settings
+from utils.logger import setup_logging, get_logger
+from api import chat, archive, search, health
+from services.cache import cache_manager
+from services.storage import supabase_client
 
 # Setup structured logging
 setup_logging()
