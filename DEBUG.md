@@ -195,6 +195,20 @@ numpy>=1.24.0  # Pour services/embeddings.py
 
 ---
 
+## ❌ Issue #13: Missing next-pwa dependency (RÉSOLU)
+**Erreur :**
+```
+Error: Cannot find module 'next-pwa'
+Require stack: /opt/render/project/src/frontend/next.config.js
+```
+**Cause :** Package `next-pwa` manquant dans frontend/package.json
+**Solution :** Ajout next-pwa>=5.6.0 dans dependencies
+```json
+"next-pwa": "5.6.0"  // Pour PWA functionality dans next.config.js
+```
+
+---
+
 ## ✅ AutoGen v0.4 Migration (COMPLET)
 **Migration :** Ancienne API v0.2 → Nouvelle API v0.4
 **Changements majeurs :**
@@ -208,7 +222,7 @@ numpy>=1.24.0  # Pour services/embeddings.py
 ---
 
 ## 📊 Statistiques Debug
-- **Issues résolues :** 12/12 ✅
+- **Issues résolues :** 13/13 ✅
 - **Migration :** AutoGen v0.4 complète ✅
 - **Temps total debug :** ~3.5h
 - **Pattern principal :** Problèmes imports/dépendances Python + Migration API
