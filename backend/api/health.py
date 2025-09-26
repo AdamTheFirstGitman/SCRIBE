@@ -1,5 +1,6 @@
 """
 Health check endpoints for Plume & Mimir API
+Test backend deployment - buildFilter validation
 """
 
 from fastapi import APIRouter, Depends, HTTPException
