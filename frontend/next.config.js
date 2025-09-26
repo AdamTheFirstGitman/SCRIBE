@@ -51,8 +51,9 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
-  // Use standalone for Render.com deployment
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Use export for Render.com deployment (better compatibility with PWA)
+  output: process.env.NODE_ENV === 'production' ? undefined : undefined,
+  trailingSlash: true,
 
   // Enable image optimization for production
   images: {

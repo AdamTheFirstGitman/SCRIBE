@@ -9,6 +9,20 @@ services:
         value: production
       - key: NODE_VERSION
         value: 18.18.2
+      - key: NEXT_PUBLIC_API_URL
+        value: https://scribe-api.onrender.com
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://scribe-api.onrender.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://eytfiohvhlqokikemlfn.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5dGZpb2h2aGxxb2tpa2VtbGZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4NzU3NjUsImV4cCI6MjA3NDQ1MTc2NX0.szIeUg_5PG0ZiIhmD6QlPXf31EYB-vOLzfJwrkhA9I8
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://scribe-frontend-qk6s.onrender.com
+      - key: NEXT_PUBLIC_PWA_ENABLED
+        value: true
+      - key: NEXT_PUBLIC_APP_NAME
+        value: SCRIBE
     healthCheckPath: /
     numInstances: 1
     plan: starter
