@@ -52,14 +52,17 @@ export default function ChatPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent>('plume')
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [isOnline, setIsOnline] = useState(true)
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Handle network status changes
+  // Handle network status changes - SSR safe
   useEffect(() => {
+    // Set initial value after component mounts (client-side only)
+    setIsOnline(navigator.onLine)
+
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
 

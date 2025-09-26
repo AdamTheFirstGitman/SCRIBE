@@ -48,10 +48,13 @@ export default function UploadPage() {
   const [viewMode, setViewMode] = useState<'text' | 'html'>('text')
   const [customTitle, setCustomTitle] = useState('')
   const [customTags, setCustomTags] = useState('')
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [isOnline, setIsOnline] = useState(true)
 
-  // Handle network status changes
+  // Handle network status changes - SSR safe
   React.useEffect(() => {
+    // Set initial value after component mounts (client-side only)
+    setIsOnline(navigator.onLine)
+
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
 
