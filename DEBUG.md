@@ -179,6 +179,22 @@ from typing import Dict, Any, Optional, List  # Ajout de List
 
 ---
 
+## ❌ Issue #12: Missing numpy dependency (RÉSOLU)
+**Erreur :**
+```
+File "/opt/render/project/src/backend/services/embeddings.py", line 14
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+```
+**Cause :** Package `numpy` manquant dans requirements.txt
+**Solution :** Ajout numpy>=1.24.0 dans requirements.txt
+```python
+# Dans requirements.txt
+numpy>=1.24.0  # Pour services/embeddings.py
+```
+
+---
+
 ## ✅ AutoGen v0.4 Migration (COMPLET)
 **Migration :** Ancienne API v0.2 → Nouvelle API v0.4
 **Changements majeurs :**
@@ -192,7 +208,7 @@ from typing import Dict, Any, Optional, List  # Ajout de List
 ---
 
 ## 📊 Statistiques Debug
-- **Issues résolues :** 11/11 ✅
+- **Issues résolues :** 12/12 ✅
 - **Migration :** AutoGen v0.4 complète ✅
 - **Temps total debug :** ~3.5h
 - **Pattern principal :** Problèmes imports/dépendances Python + Migration API
