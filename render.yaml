@@ -7,14 +7,14 @@ services:
   # =============================================================================
   - type: web
     name: scribe-api
-    runtime: python3
+    runtime: python
     repo: https://github.com/adamdahan/SCRIBE.git
     region: oregon
     branch: main
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
-    plan: hobby
+    plan: starter
     healthCheckPath: /health
 
     # Variables d'environnement Backend
@@ -58,7 +58,7 @@ services:
         fromService:
           type: web
           name: scribe-frontend
-          property: url
+          property: host
 
       # Performance
       - key: MAX_TOKENS_PLUME
@@ -88,7 +88,7 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
-    plan: hobby
+    plan: starter
 
     # Variables d'environnement Frontend
     envVars:
@@ -101,7 +101,7 @@ services:
         fromService:
           type: web
           name: scribe-api
-          property: url
+          property: host
 
       # Supabase (public keys) - À configurer dans Render Dashboard
       - key: NEXT_PUBLIC_SUPABASE_URL
