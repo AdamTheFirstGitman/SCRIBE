@@ -12,6 +12,10 @@ echo "📦 Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# Make sure uvicorn is in PATH
+echo "🔧 Installing uvicorn explicitly..."
+pip install uvicorn[standard]==0.24.0
+
 # Verify critical imports
 echo "🔍 Verifying critical dependencies..."
 python -c "
