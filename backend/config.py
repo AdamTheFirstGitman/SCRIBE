@@ -3,7 +3,8 @@ Configuration management for Plume & Mimir backend
 Uses Pydantic Settings for environment variable validation
 """
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings
 from typing import List, Optional, Dict, Any
 from enum import Enum
 import os
