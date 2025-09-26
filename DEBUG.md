@@ -52,6 +52,55 @@ export const metadata: Metadata = {
 - **Production :** Stable maintenu
 - **Code quality :** 100% clean
 
+### 🚀 **debug_auto Cycle #2 - Components UI Fix (SUCCÈS)**
+**Mission :** Résoudre erreurs module resolution sur Render
+**Erreurs identifiées :**
+```
+Module not found: Can't resolve '@/components/ui/button'
+Module not found: Can't resolve '@/components/ui/card'
+Module not found: Can't resolve '@/components/ui/textarea'
+Module not found: Can't resolve '@/lib/offline'
+```
+**Cause :** Composants UI dans `/components/ui/` (racine) mais Render cherche dans `/frontend/components/ui/`
+**Solution appliquée :**
+```bash
+# Copie structure correcte pour Render
+mkdir -p frontend/components/ui
+cp -r components/ui/* frontend/components/ui/
+cp -r components/{chat,pwa,OfflineStatus.tsx,providers.tsx} frontend/components/
+```
+**Résultats :**
+- ✅ **Build local réussi** (0 erreurs module)
+- ✅ **Structure Render correcte**
+- ✅ **Tous imports résolus**
+- ✅ **Deploy hook intégré** (`dep-d3bbmfali9vc738hq2sg`)
+
+### 🔧 **Deploy Hook Integration**
+**Hook URL :** `https://api.render.com/deploy/srv-d3b7s9odl3ps73964ieg?key=_pf1X8o6lPA`
+**Test :** ✅ HTTP 200 - Deploy ID: `dep-d3bbmfali9vc738hq2sg`
+**Surveillance :** MCP monitoring actif pour validation
+
+### 🚨 **debug_auto Cycle #3 - Fix 502 Bad Gateway (EN COURS)**
+**Mission :** Résoudre 502 Bad Gateway sur frontend
+**Erreur :** `502 Bad Gateway` - Request ID: `98540de3cb50c676-CDG`
+**Cause :** Configuration Render incomplète + conflits render.yaml
+**Solutions appliquées :**
+```yaml
+# render.yaml nettoyé pour Render.com + startCommand correct
+services:
+  - type: web
+    buildCommand: npm ci && npm run build
+    startCommand: node .next/standalone/frontend/server.js  # Next.js standalone path correct
+    envVars correctes pour production
+```
+**Fixes tentés :**
+- ✅ Nettoyage render.yaml (conflits Vercel vs Render)
+- ✅ Fix startCommand: `npm start` → `node .next/standalone/server.js` → `node .next/standalone/frontend/server.js`
+- 🔄 Deploy hook triggers: `dep-d3bbrv3ipnbc73focsbg`, `dep-d3bbtv0dl3ps73994iq0`, `dep-d3bc0t0gjchc73fdr4kg`, `dep-d3bc2q3e5dus73cefbd0`
+
+**Status actuel :** 🔄 Build Render prend >8 minutes (normal Next.js PWA), monitoring en cours
+**Next :** Attendre completion build ou investiguer logs Render si échec
+
 ---
 
 ## ❌ Issue #1: Python Version (RÉSOLU)
