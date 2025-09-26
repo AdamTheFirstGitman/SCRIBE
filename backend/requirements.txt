@@ -4,27 +4,27 @@ fastapi==0.117.1
 uvicorn[standard]==0.32.1
 pydantic==2.10.1
 
-# AI & LangChain (2025 versions)
-langchain==0.3.27
-langgraph==0.2.38
-anthropic==0.45.0
-openai==1.58.1
+# AI & LangChain (versions flexibles)
+langchain>=0.3.20
+langgraph>=0.2.30
+anthropic>=0.40.0
+openai>=1.50.0
 
 # Microsoft AutoGen 2025 (New architecture)
-autogen-agentchat==0.4.0.dev12
-autogen-ext[openai]==0.4.0.dev12
-autogen-core==0.4.0.dev12
+autogen-agentchat>=0.4.0.dev8
+autogen-ext[openai]>=0.4.0.dev8
+autogen-core>=0.4.0.dev8
 
-# Database & Storage
-supabase==2.10.0
-sqlalchemy==2.0.36
-asyncpg==0.30.0
-psycopg2-binary==2.9.10
+# Database & Storage (versions flexibles)
+supabase>=2.9.0
+sqlalchemy>=2.0.30
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
 
-# HTTP & Requests
-httpx==0.28.1
-requests==2.32.3
-aiohttp==3.11.11
+# HTTP & Requests (versions flexibles pour éviter conflits)
+httpx>=0.26,<0.28
+requests>=2.32.0
+aiohttp>=3.11.0
 
 # Data Processing
 python-multipart==0.0.12
