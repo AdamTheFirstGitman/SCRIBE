@@ -194,6 +194,11 @@ AGENTS/
 - **"maj"** → Mise à jour documentation selon contexte
 - **"deploy"** → Préparation déploiement avec checks complets
 
+### Debug Skills & Methodology
+
+- **Backend Debug :** Voir `DEBUG.md` (13 issues résolues ✅)
+- **Frontend Debug :** Voir `FRONTEND_DEBUG.md` (méthode systématique)
+
 ### Méthodologie Déploiement & Automation
 
 **Scripts Intermédiaires Intelligents :**

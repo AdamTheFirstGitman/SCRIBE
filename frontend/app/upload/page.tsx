@@ -141,7 +141,7 @@ export default function UploadPage() {
 
     } catch (error) {
       console.error('Upload failed:', error)
-      toast.error('Échec de l\\'upload')
+      toast.error("Échec de l'upload")
     } finally {
       setIsUploading(false)
     }

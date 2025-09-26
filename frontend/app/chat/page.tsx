@@ -158,7 +158,7 @@ export default function ChatPage() {
       await simulateAgentResponse(currentInput, selectedAgent, loadingMessage.id)
     } catch (error) {
       console.error('Chat error:', error)
-      toast.error('Erreur de communication avec l\\'agent')
+      toast.error("Erreur de communication avec l'agent")
 
       // Remove loading message on error
       setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
