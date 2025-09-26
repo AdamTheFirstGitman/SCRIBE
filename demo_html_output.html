@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCRIBE - Conversion HTML de tes Post-it IA</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #fefefe;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #6b46c1;
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 2.5rem;
+        }
+
+        .demo-section {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-title {
+            color: #059669;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .original-text {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            color: #4a5568;
+        }
+
+        .converted-html {
+            padding: 0;
+        }
+
+        .converted-html h2 {
+            color: #6b46c1;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .converted-html p {
+            margin: 1rem 0;
+            color: #4a5568;
+        }
+
+        .converted-html a {
+            color: #2b6cb0;
+            text-decoration: none;
+            border-bottom: 1px solid #bee3f8;
+        }
+
+        .converted-html a:hover {
+            background: #ebf8ff;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .converted-html ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .converted-html li {
+            padding: 0.25rem 0;
+            padding-left: 1rem;
+            position: relative;
+            color: #4a5568;
+        }
+
+        .converted-html li::before {
+            content: "→";
+            color: #6b46c1;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .converted-html em {
+            color: #d69e2e;
+            font-style: italic;
+        }
+
+        .converted-html strong {
+            color: #059669;
+            font-weight: bold;
+        }
+
+        .stats {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6b46c1;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.8rem;
+        }
+
+        .toggle-demo {
+            background: linear-gradient(135deg, #6b46c1, #059669);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 2rem 0;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 SCRIBE - Conversion HTML de tes Post-it IA 🔥</h1>
+
+    <div class="demo-section">
+        <div class="demo-title">
+            📝 TEXTE ORIGINAL (tes notes)
+        </div>
+        <div class="original-text">Hackathon Vierzon
+Cursor
+v0.dev
+
+
+Hackathon LLMxLaw (Station F)
+Ressources (cf. mail avant hackathon) Koyeb, LlamaIndex, Together.ai, etc. https://koyeb.notion.site/Koyeb-Resources-for-LLM-x-Law-Hackathon-at-Station-F-13f914392cfe80bebf22d7b0b2fff722
+https://www.koyeb.com/tutorials/use-llamaindex-to-build-a-retrieval-augmented-generation-rag-application
+
+
+Attentions Mechanism
+Big innovation in ML. Rather than going word by word in order, it would consider a sentence as a whole and gives more relevant weighs depending on the whole context.
+https://aigents.co/learn/Attention-mechanism
+
+
+Diffusion Models
+Article de Kemal Erdem : https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models
+-> Cite 3 papiers :
+- 2015 : https://arxiv.org/abs/1503.03585, « Deep Unsupervised Learning using Nonequilibrium Thermodynamics »
+- 2020 : https://arxiv.org/abs/2006.11239, « Denoising Diffusion Probabilistic Models »
+- 2021 (Researchers from OpenAI) : https://arxiv.org/abs/2102.09672, « Improved Denoising Diffusion Probabilistic Models »
+
+
+Apps
+
+Cursor
+Claude Code
+Klein (plugged to Claude)
+Supabase (scalable contrairement à MongoDB)</div>
+    </div>
+
+    <div class="toggle-demo">
+        📱 SUR MOBILE : BOUTON TOGGLE TEXT ↔ HTML 📱
+    </div>
+
+    <div class="demo-section">
+        <div class="demo-title">
+            🌐 HTML CONVERTI (intelligence artificielle)
+        </div>
+        <article class="converted-html">
+            <h2>Hackathon Vierzon</h2>
+            <h2>Cursor</h2>
+            <h2>v0.dev</h2>
+            <h2>Hackathon LLMxLaw (Station F)</h2>
+            <p>Ressources <em>(cf. mail avant hackathon)</em> Koyeb, LlamaIndex, Together.ai, etc. <a href="https://koyeb.notion.site/Koyeb-Resources-for-LLM-x-Law-Hackathon-at-Station-F-13f914392cfe80bebf22d7b0b2fff722" target="_blank" rel="noopener">https://koyeb.notion.site/Koyeb-Resources-for-LLM-x-Law-Hackathon-at-Station-F-13f914392cfe80bebf22d7b0b2fff722</a> <a href="https://www.koyeb.com/tutorials/use-llamaindex-to-build-a-retrieval-augmented-generation-rag-application" target="_blank" rel="noopener">https://www.koyeb.com/tutorials/use-llamaindex-to-build-a-retrieval-augmented-generation-rag-application</a></p>
+            <h2>Attentions Mechanism</h2>
+            <p>Big innovation in ML. Rather than going word by word in order, it would consider a sentence as a whole and gives more relevant weighs depending on the whole context. <a href="https://aigents.co/learn/Attention-mechanism" target="_blank" rel="noopener">https://aigents.co/learn/Attention-mechanism</a></p>
+            <h2>Diffusion Models</h2>
+            <ul>
+                <li>Article de <strong>Kemal Erdem</strong> : https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models</li>
+                <li>→ Cite 3 papiers :</li>
+                <li>- 2015 : https://arxiv.org/abs/1503.03585, « Deep Unsupervised Learning using Nonequilibrium Thermodynamics »</li>
+                <li>- 2020 : https://arxiv.org/abs/2006.11239, « Denoising Diffusion Probabilistic Models »</li>
+                <li>- 2021 <em>(Researchers from OpenAI)</em> : https://arxiv.org/abs/2102.09672, « Improved Denoising Diffusion Probabilistic Models »</li>
+            </ul>
+            <h2>Apps</h2>
+            <h2>Cursor</h2>
+            <h2>Claude Code</h2>
+            <h2>Klein <em>(plugged to Claude)</em></h2>
+            <h2>Supabase <em>(scalable contrairement à MongoDB)</em></h2>
+        </article>
+
+        <div class="stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">Headers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Liens</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">114</div>
+                    <div class="stat-label">Mots</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">Topics</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="demo-title">
+            🎯 MAGIE DE LA CONVERSION
+        </div>
+        <ul class="converted-html">
+            <li><strong>Headers intelligents</strong> : Détecte que "Hackathon Vierzon" = titre</li>
+            <li><strong>Liens cliquables</strong> : URLs automatiquement convertis avec target="_blank"</li>
+            <li><strong>Listes auto</strong> : Groupe les papiers de recherche en liste</li>
+            <li><strong>Emphases</strong> : Parenthèses → <em>italic</em>, noms → <strong>bold</strong></li>
+            <li><strong>Structure sémantique</strong> : &lt;article&gt; + &lt;h2&gt; + &lt;p&gt; + &lt;ul&gt;</li>
+            <li><strong>Topics extraits</strong> : AI, Hackathon, Claude, LLM...</li>
+        </ul>
+    </div>
+
+    <div class="toggle-demo">
+        🚀 PRÊT POUR MIMIR RAG INDEXATION 🚀
+    </div>
+
+</body>
+</html>

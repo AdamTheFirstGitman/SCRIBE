@@ -78,17 +78,24 @@
 - [x] AutoGen Integration (Discussion + fallback)
 - [x] Services IA (Transcription + Embeddings + RAG)
 
-#### 📋 Phase 3 : Interface
+#### ✅ Phase 3 : Upload & Conversion
+- [x] Document Upload Pipeline (drag & drop + validation)
+- [x] Smart Text-to-HTML Conversion (headers + links + lists)
+- [x] Toggle View Component (TEXT ↔ HTML mobile-first)
+- [x] Chunking Service (semantic boundaries + overlap)
+- [x] Demo Interface (light theme + clean design)
+
+#### 📋 Phase 4 : Interface
 - [ ] Chat Interface (Vocal + Textuel + animations)
 - [ ] Archives System (Gestion notes + recherche)
 - [ ] PWA Avancé (Service Worker + offline)
 
-#### 📋 Phase 4 : RAG & Intégrations
+#### 📋 Phase 5 : RAG & Intégrations
 - [ ] API Endpoints Complete (REST + SSE + WebSocket)
 - [ ] RAG State-of-the-Art (Knowledge graph + auto-tuning)
 - [ ] Realtime Integration (Subscriptions + sync)
 
-#### 📋 Phase 5 : Production
+#### 📋 Phase 6 : Production
 - [ ] Performance Optimization (CDN + scaling + monitoring)
 - [ ] Tests & Déploiement (E2E + CI/CD + docs)
 - [ ] Polish UI/UX (Micro-interactions + accessibility)
