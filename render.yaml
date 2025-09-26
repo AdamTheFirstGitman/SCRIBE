@@ -93,7 +93,7 @@ services:
     region: oregon
     branch: main
     rootDir: frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     plan: starter
     healthCheckPath: /health
