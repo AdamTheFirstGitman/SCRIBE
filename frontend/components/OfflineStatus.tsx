@@ -17,7 +17,7 @@ interface OfflineState {
 
 export default function OfflineStatus({ className = '' }: OfflineStatusProps) {
   const [state, setState] = useState<OfflineState>({
-    isOnline: navigator.onLine,
+    isOnline: true, // SSR-safe default
     pendingUploads: 0,
     pendingMessages: 0,
     lastSync: null,
@@ -26,6 +26,12 @@ export default function OfflineStatus({ className = '' }: OfflineStatusProps) {
 
   useEffect(() => {
     let mounted = true;
+
+    // Set initial navigator value (client-side only)
+    setState(prev => ({
+      ...prev,
+      isOnline: navigator.onLine
+    }));
 
     // Initialize offline utils
     OfflineUtils.init().then(async () => {
