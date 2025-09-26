@@ -175,18 +175,24 @@ class Settings(BaseSettings):
     @validator("CORS_ORIGINS", pre=True)
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
+            if v.strip() == "":
+                return ["http://localhost:3000", "http://127.0.0.1:3000"]
             return [origin.strip() for origin in v.split(",")]
         return v
 
     @validator("ALLOWED_HOSTS", pre=True)
     def parse_allowed_hosts(cls, v):
         if isinstance(v, str):
+            if v.strip() == "":
+                return ["localhost", "127.0.0.1", "0.0.0.0"]
             return [host.strip() for host in v.split(",")]
         return v
 
     @validator("ALLOWED_AUDIO_FORMATS", pre=True)
     def parse_audio_formats(cls, v):
         if isinstance(v, str):
+            if v.strip() == "":
+                return ["webm", "mp3", "wav", "m4a", "ogg"]
             return [format.strip().lower() for format in v.split(",")]
         return v
 
