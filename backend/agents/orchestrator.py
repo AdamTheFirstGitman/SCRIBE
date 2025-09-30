@@ -9,7 +9,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.memory import MemorySaver
+# from langgraph.checkpoint.postgres import PostgresSaver  # TODO: Re-enable when implementing async context manager
 
 from agents.state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
 from services.transcription import transcription_service
@@ -46,18 +47,19 @@ class PlumeOrchestrator:
             # Build the workflow graph
             self.graph = self._build_graph()
 
-            # Setup PostgreSQL checkpointing with Supabase
-            checkpointer = PostgresSaver.from_conn_string(settings.DATABASE_URL)
+            # Use in-memory checkpointing (temporary)
+            # TODO: Implement PostgreSQL checkpointing with proper async context manager
+            # async with PostgresSaver.from_conn_string(settings.DATABASE_URL) as checkpointer:
+            #     await checkpointer.setup()
+            #     self.app = self.graph.compile(checkpointer=checkpointer)
+            checkpointer = MemorySaver()
+            logger.warning("Using in-memory checkpointing (PostgreSQL checkpointing disabled temporarily)")
 
-            # Setup checkpoint table (creates if doesn't exist)
-            await checkpointer.setup()
-            logger.info("PostgreSQL checkpointer initialized with Supabase")
-
-            # Compile the workflow with persistent checkpointing
+            # Compile the workflow with checkpointing
             self.app = self.graph.compile(checkpointer=checkpointer)
 
             self._initialized = True
-            logger.info("Orchestrator initialized successfully with persistent memory")
+            logger.info("Orchestrator initialized successfully")
 
         except Exception as e:
             logger.error("Failed to initialize orchestrator", error=str(e))
