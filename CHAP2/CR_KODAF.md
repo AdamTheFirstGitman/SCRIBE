@@ -3,7 +3,7 @@
 **Agent :** KodaF (Frontend Specialist)
 **Mission :** Phase 2.1 - Quick Wins Frontend Enhancement
 **Date :** 30 septembre 2025
-**Statut :** ✅ TERMINÉ
+**Statut :** ✅ TERMINÉ (avec 4 issues debug résolues)
 
 ---
 
@@ -761,6 +761,164 @@ export default function RootLayout({ children }) {
 4. `suppressHydrationWarning` permet modification className sans warning React
 5. Toujours tester visuel en production, pas juste `npm run build`
 6. Screenshot utilisateur = debug invaluable pour CSS issues
+
+---
+
+### Issue #4: PostCSS Config Manquant - Tailwind Non-Compilé (RÉSOLU)
+
+**Symptômes (après commit `8bd3968`):**
+```
+User feedback: "ça marche toujours pas, comme si le css n'était pas pris en compte"
+Render logs: Tous les endpoints 200 OK
+Build local: ✓ Compiled successfully
+Comportement: Quelques animations marchent, mais le reste non-stylé
+```
+
+**Investigation initiale:**
+1. `tailwind.config.js` ✅ Existe et correct (darkMode: 'class', content paths OK)
+2. `app/globals.css` ✅ Existe avec directives @tailwind
+3. `layout.tsx` ✅ Importe globals.css correctement
+4. `className="dark"` ✅ Présent sur <html>
+5. **`postcss.config.js` ❌ MANQUANT!**
+
+**Diagnostic approfondi:**
+
+Inspection du CSS compilé (`.next/static/css/*.css`) :
+```css
+/* ❌ CSS NON-COMPILÉ (avant fix) */
+@tailwind base;@tailwind components;@tailwind utilities;
+@layer base { ... @apply dark:border-gray-200/10 light:border-gray-200 ... }
+```
+
+Le CSS contenait ENCORE les directives `@tailwind` et `@apply` non-compilées!
+
+**Cause racine #1: PostCSS config manquant**
+```
+Sans postcss.config.js:
+- Next.js ne sait pas qu'il faut utiliser Tailwind
+- Les directives @tailwind ne sont PAS traitées
+- Les @apply restent tels quels dans le CSS final
+- Résultat: CSS invalide, navigateur ignore tout
+```
+
+**Cause racine #2: Plugins Tailwind non-installés**
+```bash
+# tailwind.config.js référençait:
+require('@tailwindcss/typography')
+require('@tailwindcss/forms')
+require('@tailwindcss/container-queries')
+
+# Mais package.json n'avait pas ces packages!
+Error: Cannot find module '@tailwindcss/typography'
+```
+
+**Cause racine #3: Variantes `light:` invalides**
+```css
+/* ❌ globals.css (invalide) */
+* {
+  @apply dark:border-gray-200/10 light:border-gray-200;
+}
+
+body {
+  @apply bg-gray-950 text-gray-50 dark:bg-gray-950 dark:text-gray-50 light:bg-white light:text-gray-900;
+}
+```
+
+Tailwind avec `darkMode: 'class'` ne supporte QUE la variante `dark:`, pas `light:`!
+
+**Solution appliquée (commit `82522d7`):**
+
+**1. Créé `frontend/postcss.config.js`:**
+```javascript
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+```
+
+**2. Installé plugins Tailwind manquants:**
+```bash
+npm install -D @tailwindcss/typography @tailwindcss/forms @tailwindcss/container-queries autoprefixer
+```
+
+**3. Corrigé `globals.css` (variantes invalides):**
+```css
+/* ✅ AVANT (invalide) */
+* {
+  @apply dark:border-gray-200/10 light:border-gray-200;
+}
+
+/* ✅ APRÈS (valide) */
+* {
+  border-color: rgba(229, 231, 235, 0.1);
+}
+
+.dark * {
+  border-color: rgba(229, 231, 235, 0.1);
+}
+
+body {
+  @apply bg-white text-gray-900;
+}
+
+.dark body {
+  @apply bg-gray-950 text-gray-50;
+}
+```
+
+**4. Clean rebuild pour résoudre cache issues:**
+```bash
+rm -rf node_modules .next
+npm install
+npm run build
+```
+
+**Résultats:**
+```bash
+✓ Compiled successfully
+✓ Generating static pages (9/9)
+
+# Inspection nouveau CSS compilé:
+$ head .next/static/css/*.css
+
+# ✅ CSS COMPILÉ CORRECTEMENT (après fix):
+.dark{--color-plume:139 92 246;...}.dark body{background-color:rgb(10 10 10/var(--tw-bg-opacity,1));color:rgb(249 250 251/var(--tw-text-opacity,1))}
+.bg-gray-950{--tw-bg-opacity:1;background-color:rgb(10 10 10/var(--tw-bg-opacity,1))}...
+
+# CSS minifié, 2 lignes, ~6KB
+# Plus de directives @tailwind ou @apply
+# Toutes les classes Tailwind compilées en vraies propriétés CSS
+```
+
+**Pourquoi PostCSS est essentiel:**
+```
+Next.js build process:
+1. Lit globals.css avec @tailwind directives
+2. Cherche postcss.config.js
+3. ❌ Si absent: Skip processing → @tailwind reste tel quel → CSS invalide
+4. ✅ Si présent: Exécute Tailwind plugin → Compile @tailwind → CSS valide
+
+Tailwind est un PLUGIN PostCSS!
+Sans postcss.config.js, Tailwind n'est JAMAIS exécuté.
+```
+
+**Statut:** ✅ RÉSOLU
+- PostCSS config créé et fonctionnel
+- Plugins Tailwind installés (typography, forms, container-queries)
+- CSS correctement compilé (classes Tailwind → vraies propriétés CSS)
+- Build local testé et validé
+- Push vers Render pour redéployment
+
+**Leçons apprises:**
+1. **PostCSS config OBLIGATOIRE** pour Tailwind CSS avec Next.js
+2. Toujours vérifier que les plugins référencés dans `tailwind.config.js` sont installés
+3. Tailwind `darkMode: 'class'` ne supporte QUE `dark:`, pas `light:`
+4. Pour light mode avec `.dark` class strategy: utiliser sélecteurs CSS normaux ou créer variante personnalisée
+5. Inspecter le CSS compilé (`.next/static/css/*.css`) pour debug Tailwind issues
+6. Si directives `@tailwind` ou `@apply` présentes dans CSS final = PostCSS pas exécuté
+7. Clean rebuild (`rm -rf node_modules .next && npm i`) résout cache conflicts
 
 ---
 
