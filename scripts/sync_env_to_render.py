@@ -34,6 +34,9 @@ SECRET_KEYS = {
     'PERPLEXITY_API_KEY',
     'TAVILY_API_KEY',
     'SUPABASE_SERVICE_KEY',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'DATABASE_URL',
     'JWT_SECRET',
     'SECRET_KEY',
 }
@@ -120,7 +123,9 @@ def get_service_env_vars(api_key: str, service_id: str) -> List[Dict]:
             headers=headers
         )
         response.raise_for_status()
-        return response.json()
+        # Render API returns [{"envVar": {"key": "...", "value": "..."}}, ...]
+        raw_data = response.json()
+        return [item['envVar'] for item in raw_data]
     except requests.exceptions.RequestException as e:
         print(f"{Colors.RED}❌ Failed to fetch env vars: {e}{Colors.END}")
         sys.exit(1)
