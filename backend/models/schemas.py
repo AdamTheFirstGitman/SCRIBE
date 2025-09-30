@@ -82,7 +82,7 @@ class ChatRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "message": "How does photosynthesis work?",
                 "mode": "auto",
@@ -114,7 +114,7 @@ class ChatResponse(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "response": "Photosynthesis is the process by which plants convert light energy into chemical energy...",
                 "agent_used": "mimir",
@@ -168,7 +168,7 @@ class NoteCreate(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "title": "Understanding Photosynthesis",
                 "content": "Photosynthesis is a crucial biological process...",
@@ -206,7 +206,7 @@ class NoteResponse(UUIDModel, TimestampedModel):
     is_deleted: bool = False
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "title": "Understanding Photosynthesis",
@@ -243,7 +243,7 @@ class SearchRequest(BaseModel):
     include_content: bool = True
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "query": "machine learning algorithms",
                 "search_type": "hybrid",
@@ -277,7 +277,7 @@ class SearchResponse(BaseModel):
     used_cache: bool = False
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "results": [
                     {
@@ -328,7 +328,7 @@ class ErrorResponse(BaseModel):
     details: Optional[Dict[str, Any]] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "error": "Validation error",
                 "status_code": 422,

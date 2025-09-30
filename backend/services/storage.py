@@ -30,7 +30,6 @@ class SupabaseService:
             options = ClientOptions(
                 auto_refresh_token=True,
                 persist_session=True,
-                storage_key="plume_mimir_session",
                 realtime={"params": {"eventsPerSecond": 10}}
             )
 
