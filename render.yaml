@@ -26,29 +26,21 @@ services:
 
     # Variables d'environnement Backend
     envVars:
-      # Supabase - À configurer dans Render Dashboard
+      # =============================================================================
+      # CONFIGS PUBLIQUES (hardcodées ici - safe to commit)
+      # =============================================================================
+
+      # Supabase URLs (publiques par design)
       - key: SUPABASE_URL
-        value: YOUR_SUPABASE_URL_HERE
+        value: https://eytfiohvhlqokikemlfn.supabase.co
       - key: SUPABASE_ANON_KEY
-        value: YOUR_SUPABASE_ANON_KEY_HERE
-      - key: SUPABASE_SERVICE_KEY
-        value: YOUR_SUPABASE_SERVICE_KEY_HERE
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5dGZpb2h2aGxxb2tpa2VtbGZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4NzU3NjUsImV4cCI6MjA3NDQ1MTc2NX0.szIeUg_5PG0ZiIhmD6QlPXf31EYB-vOLzfJwrkhA9I8
 
-      # Database - À configurer dans Render Dashboard
+      # Database URL
       - key: DATABASE_URL
-        value: YOUR_DATABASE_URL_HERE
+        value: postgresql://postgres:jihqo4-jixxac-piqnYd@db.eytfiohvhlqokikemlfn.supabase.co:5432/postgres
 
-      # AI Services - À configurer dans Render Dashboard
-      - key: CLAUDE_API_KEY
-        value: YOUR_CLAUDE_API_KEY_HERE
-      - key: OPENAI_API_KEY
-        value: YOUR_OPENAI_API_KEY_HERE
-      - key: PERPLEXITY_API_KEY
-        value: YOUR_PERPLEXITY_API_KEY_HERE
-      - key: TAVILY_API_KEY
-        value: YOUR_TAVILY_API_KEY_HERE
-
-      # Application
+      # Application Settings
       - key: PYTHON_ENV
         value: production
       - key: LOG_LEVEL
@@ -56,11 +48,18 @@ services:
       - key: STRUCTURED_LOGGING
         value: "true"
 
-      # Security - À configurer dans Render Dashboard
-      - key: JWT_SECRET
-        value: YOUR_JWT_SECRET_HERE
-      - key: SECRET_KEY
-        value: YOUR_SECRET_KEY_HERE
+      # =============================================================================
+      # SECRETS (managed via Render Dashboard + sync script)
+      # Run: python scripts/sync_env_to_render.py --apply
+      # =============================================================================
+      # Les secrets suivants sont gérés automatiquement par le script:
+      # - SUPABASE_SERVICE_KEY
+      # - CLAUDE_API_KEY
+      # - OPENAI_API_KEY
+      # - PERPLEXITY_API_KEY
+      # - TAVILY_API_KEY
+      # - JWT_SECRET
+      # - SECRET_KEY
       - key: CORS_ORIGINS
         fromService:
           type: web
