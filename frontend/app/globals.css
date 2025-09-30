@@ -8,12 +8,6 @@
 
 @layer base {
   :root {
-    /* Custom properties for dynamic theming */
-    --color-plume: 139 92 246;
-    --color-mimir: 5 150 105;
-    --color-background: 15 15 15;
-    --color-foreground: 249 250 251;
-
     /* Animation durations */
     --duration-fast: 150ms;
     --duration-normal: 300ms;
@@ -31,6 +25,15 @@
     --radius-md: 0.75rem;
     --radius-lg: 1rem;
     --radius-xl: 1.5rem;
+  }
+
+  /* Dark theme (default) */
+  .dark {
+    /* Custom properties for dynamic theming */
+    --color-plume: 139 92 246;
+    --color-mimir: 5 150 105;
+    --color-background: 15 15 15;
+    --color-foreground: 249 250 251;
 
     /* Shadows */
     --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
@@ -38,12 +41,26 @@
     --shadow-hard: 0 8px 24px 0 rgba(0, 0, 0, 0.2);
   }
 
+  /* Light theme */
+  .light {
+    /* Custom properties for light mode */
+    --color-plume: 124 58 237;
+    --color-mimir: 5 150 105;
+    --color-background: 255 255 255;
+    --color-foreground: 17 24 39;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+    --shadow-hard: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
+  }
+
   * {
-    @apply border-gray-200/10;
+    @apply dark:border-gray-200/10 light:border-gray-200;
   }
 
   body {
-    @apply bg-gray-950 text-gray-50;
+    @apply bg-gray-950 text-gray-50 dark:bg-gray-950 dark:text-gray-50 light:bg-white light:text-gray-900;
     font-feature-settings: "rlig" 1, "calt" 1;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

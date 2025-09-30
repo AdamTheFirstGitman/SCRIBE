@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '../components/providers'
 import { PWAInstallPrompt } from '../components/pwa/InstallPrompt'
 import OfflineStatus from '../components/OfflineStatus'
+import { Navigation } from '../components/layout/Navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -82,7 +83,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" className="dark" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head>
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -121,8 +122,11 @@ export default function RootLayout({
               Aller au contenu principal
             </a>
 
+            {/* Navigation */}
+            <Navigation />
+
             {/* Main Content */}
-            <main id="main-content" className="flex-1 flex flex-col">
+            <main id="main-content" className="flex-1 flex flex-col pb-20 lg:pb-0">
               {children}
             </main>
           </div>

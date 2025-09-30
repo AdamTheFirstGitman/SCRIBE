@@ -21,6 +21,7 @@ from utils.logger import setup_logging, get_logger
 from api import chat, archive, search, health
 from services.cache import cache_manager
 from services.storage import supabase_client
+from agents.orchestrator import PlumeOrchestrator
 
 # Setup structured logging
 setup_logging()
@@ -28,6 +29,9 @@ logger = get_logger(__name__)
 
 # Rate limiter configuration
 limiter = Limiter(key_func=get_remote_address)
+
+# Initialize orchestrator
+orchestrator = PlumeOrchestrator()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +48,13 @@ async def lifespan(app: FastAPI):
         # Initialize cache
         await cache_manager.initialize()
         logger.info("Cache system initialized")
+
+        # Initialize orchestrator
+        await orchestrator.initialize()
+        logger.info("Orchestrator initialized successfully")
+
+        # Make orchestrator available to app
+        app.state.orchestrator = orchestrator
 
         # Warm up critical services
         # TODO: Add service warm-up if needed

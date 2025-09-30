@@ -27,7 +27,15 @@ class AgentState(TypedDict, total=False):
     context_ids: List[str]                 # IDs of documents used as context
     session_id: Optional[str]              # Session identifier
     conversation_id: Optional[str]         # Conversation identifier
+    user_id: Optional[str]                 # User identifier for memory/preferences
     user_metadata: Dict[str, Any]          # User-specific metadata
+
+    # Memory context (loaded by memory_service)
+    recent_messages: List[Dict[str, Any]]  # Recent conversation messages
+    similar_past_conversations: List[Dict[str, Any]]  # Similar past conversations
+    user_preferences: Dict[str, Any]       # User preferences
+    conversation_summary: str              # Current conversation topic summary
+    routing_metadata: Dict[str, Any]       # Intent classification metadata
 
     # Agent responses
     plume_response: Optional[str]          # Response from Plume agent
@@ -131,6 +139,8 @@ def create_initial_state(
     voice_data: Optional[str] = None,
     audio_format: Optional[str] = None,
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
+    user_id: Optional[str] = None,
     context_ids: Optional[List[str]] = None
 ) -> AgentState:
     """Create initial state for workflow"""
@@ -146,8 +156,16 @@ def create_initial_state(
         context=[],
         context_ids=context_ids or [],
         session_id=session_id,
-        conversation_id=None,
+        conversation_id=conversation_id,
+        user_id=user_id,
         user_metadata={},
+
+        # Memory context (will be loaded by memory_service in intake_node)
+        recent_messages=[],
+        similar_past_conversations=[],
+        user_preferences={},
+        conversation_summary="",
+        routing_metadata={},
 
         # Responses (will be filled during workflow)
         plume_response=None,

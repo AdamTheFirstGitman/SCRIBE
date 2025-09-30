@@ -17,9 +17,13 @@ import time
 
 from agents.plume import PlumeAgent
 from agents.mimir import MimirAgent
+from agents.orchestrator import PlumeOrchestrator
 # from services.conversation_manager import ConversationManager  # TODO: Create this service
 # from database.supabase_client import get_supabase_client  # TODO: Create this service
 from config import settings
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -50,6 +54,30 @@ class ConversationSummary(BaseModel):
     created_at: datetime
     updated_at: datetime
     last_message_preview: str
+
+class OrchestratedChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=10000)
+    mode: str = Field(default="auto", description="Routing mode: auto, plume, mimir, or discussion")
+    session_id: Optional[str] = None
+    conversation_id: Optional[str] = None
+    user_id: Optional[str] = None
+    voice_data: Optional[str] = None
+    audio_format: Optional[str] = None
+    context_ids: Optional[List[str]] = None
+
+class OrchestratedChatResponse(BaseModel):
+    response: str
+    html: Optional[str] = None
+    agent_used: str
+    agents_involved: List[str]
+    session_id: str
+    note_id: Optional[str] = None
+    processing_time_ms: float
+    tokens_used: int
+    cost_eur: float
+    errors: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    timestamp: datetime
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -195,6 +223,61 @@ async def chat_with_mimir(request: ChatRequest):
     )
 
     return ChatResponse(**result)
+
+# Orchestrated endpoint - uses LangGraph workflow
+@router.post("/orchestrated", response_model=OrchestratedChatResponse)
+async def chat_orchestrated(request: OrchestratedChatRequest, fastapi_request: Request):
+    """
+    Orchestrated chat using LangGraph workflow
+
+    Supports intelligent routing between Plume and Mimir agents,
+    with optional AutoGen multi-agent discussion mode.
+
+    Mode options:
+    - auto: Intelligent routing based on intent classification
+    - plume: Force Plume agent (restitution)
+    - mimir: Force Mimir agent (RAG search)
+    - discussion: AutoGen multi-agent discussion
+    """
+
+    try:
+        # Get orchestrator from app state
+        orchestrator: PlumeOrchestrator = fastapi_request.app.state.orchestrator
+
+        # Process message through orchestrator with conversation memory
+        result = await orchestrator.process(
+            input_text=request.message,
+            mode=request.mode,
+            voice_data=request.voice_data,
+            audio_format=request.audio_format,
+            session_id=request.session_id,
+            conversation_id=request.conversation_id,
+            user_id=request.user_id,
+            context_ids=request.context_ids
+        )
+
+        # Return formatted response
+        return OrchestratedChatResponse(
+            response=result["response"],
+            html=result.get("html"),
+            agent_used=result["agent_used"],
+            agents_involved=result.get("agents_involved", []),
+            session_id=result["session_id"],
+            note_id=result.get("note_id"),
+            processing_time_ms=result["processing_time_ms"],
+            tokens_used=result["tokens_used"],
+            cost_eur=result["cost_eur"],
+            errors=result.get("errors", []),
+            warnings=result.get("warnings", []),
+            timestamp=datetime.now()
+        )
+
+    except Exception as e:
+        logger.error(f"Orchestrated chat failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Orchestrated chat processing failed: {str(e)}"
+        )
 
 # Server-Sent Events (SSE) Endpoints
 

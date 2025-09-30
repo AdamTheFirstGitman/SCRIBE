@@ -47,7 +47,9 @@ services:
         value: "0.0.0.0"
 ```
 
-### 🛠️ STACK TECHNIQUE
+---
+
+## 🛠️ STACK TECHNIQUE
 
 **Frontend (Next.js 14.2.15) :**
 - PWA complète + TypeScript strict
@@ -61,11 +63,13 @@ services:
 - Imports absolus agents.state
 
 **Deploy Render.com :**
-- rootDir: frontend
+- rootDir: frontend/backend
 - Build cache clear si échec
 - Git cache reset case sensitivity
 
-### Services IA Intégrés
+---
+
+## 🤖 SERVICES IA INTÉGRÉS
 
 **🎙️ Transcription Service :**
 - OpenAI Whisper API
@@ -91,151 +95,81 @@ services:
 - Perplexity (recherche temps réel)
 - Routing intelligent selon contexte
 
-### Phases de Développement
+---
 
-#### ✅ Phase 1 : Infrastructure
-- [x] Database Schema (Supabase + pgvector)
-- [x] Backend FastAPI (Structure + Services + API)
-- [x] Frontend NextJS (PWA + Tailwind + TypeScript)
-- [x] Cache System (Redis multi-niveaux)
+## 📋 ÉTAT ACTUEL & ROADMAP
 
-#### ✅ Phase 2 : Agents Core
-- [x] LangGraph Orchestrator (Workflow + State + Decision trees)
-- [x] Plume Agent (Restitution parfaite + cache + HTML)
-- [x] Mimir Agent (RAG + recherche + références)
-- [x] AutoGen Integration (Discussion + fallback)
-- [x] Services IA (Transcription + Embeddings + RAG)
+### ✅ Chapitre 1 : Les Bases (COMPLET)
+**Voir bilan exhaustif :** `CHAP1/CHAP1_BILAN_LES_BASES.md`
 
-#### ✅ Phase 3 : Upload & Conversion
-- [x] Document Upload Pipeline (drag & drop + validation)
-- [x] Smart Text-to-HTML Conversion (headers + links + lists)
-- [x] Toggle View Component (TEXT ↔ HTML mobile-first)
-- [x] Chunking Service (semantic boundaries + overlap)
-- [x] Demo Interface (light theme + clean design)
+**Résumé accomplissements :**
+- ✅ Infrastructure complète (Backend + Frontend + Database)
+- ✅ Agents Plume + Mimir opérationnels
+- ✅ RAG state-of-the-art avec web search
+- ✅ Interface chat (vocal + textuel)
+- ✅ Upload & conversion documents
+- ✅ Déploiement production (Backend + Frontend LIVE)
+- ✅ 15+ issues debug résolues
+- ✅ Agents KodaF (UI) + Dako (debug) créés
 
-#### ✅ Phase 4 : Interface Chat
-- [x] Chat Interface (Vocal + Textuel + animations)
-- [x] Mobile-first design avec toggle agents
-- [x] Voice recording + transcription
-- [x] Message bubbles + loading states
-- [x] Real-time WebSocket connections
+### 🚧 Chapitre 2 : Sur le Chantier (EN COURS)
+**Voir roadmap détaillée :** `CHAP2/CHAP2_TODO_SUR_LE_CHANTIER.md`
 
-#### ✅ Phase 5 : RAG & Intégrations
-- [x] API Endpoints Complete (REST + SSE + WebSocket)
-- [x] RAG State-of-the-Art (Knowledge graph + auto-tuning)
-- [x] Realtime Integration (Subscriptions + sync)
-- [x] Advanced Search (hybrid vector+fulltext+BM25)
-- [x] Web Search Integration (Perplexity + Tavily)
-- [x] Collaborative Features (typing, user status)
+**Objectifs prioritaires :**
+- [ ] UX/UI Professionnelle Complète
+  - [ ] Dark/Light mode toggle
+  - [ ] Animations avancées (framer-motion)
+  - [ ] Keyboard shortcuts système
+  - [ ] Accessibility A11Y complet
+  - [ ] Onboarding interactif
 
-#### ✅ Phase 6 : Production DEPLOYMENT SUCCESS! 🚀
-- [x] Performance Optimization (CDN + scaling + monitoring)
-- [x] Architecture Review (95% alignment validation)
-- [x] Comprehensive Error Handling & Recovery
-- [x] Monitoring & Analytics Dashboards
-- [x] Automated Backup & Data Protection
-- [x] End-to-End Testing Suite (Playwright)
-- [x] Offline PWA Support (Service Workers + IndexedDB)
-- [x] **Render Backend Deployment** (scribe-api ✅ LIVE)
-- [x] **Render Frontend Deployment** (scribe-frontend-qk6s ✅ EN COURS)
-- [x] **Render Debug Complete** (15+ issues backend/frontend résolues)
-- [x] **Agent KodaF Frontend Enhancement** (UI professionnelle complète)
-- [x] **Agent Dako Debug Automation** (debug_auto + MCP surveillance)
-- [x] **Deploy Hook Integration** (Auto-deployment configuré)
-- [x] **Production Architecture** (Multi-agents + surveillance autonome)
+- [ ] Architecture Agentique Avancée
+  - [ ] LangGraph orchestrator complet
+  - [ ] AutoGen v0.4 multi-agent discussions
+  - [ ] Memory partagée agents
+  - [ ] Routing automatique intelligent
 
-#### 📋 Phase 7 : Polish & Advanced UX
-- [ ] Streaming Chat (Vercel AI SDK + LangGraph hybrid)
-- [ ] Micro-interactions avancées (animations, transitions fluides)
-- [ ] Keyboard Shortcuts système (raccourcis clavier intelligents)
-- [ ] Performance Ultra (lazy loading, code splitting, optimisations)
-- [ ] Accessibility A11Y (ARIA, navigation clavier, screen readers)
-- [ ] Dark/Light Mode toggle (thème adaptatif)
-- [ ] Advanced Search UX (suggestions, filtres, historique)
+- [ ] Features Avancées
+  - [ ] Streaming Chat (Vercel AI SDK)
+  - [ ] Search UX améliorée
+  - [ ] Voice commands avancés
+  - [ ] Analytics dashboard
 
-### Configuration Déploiement
+- [ ] Performance & Scalabilité
+  - [ ] CDN Cloudflare integration
+  - [ ] Redis cache production activé
+  - [ ] Monitoring APM (Sentry)
 
-**Environnement de Développement :**
-```bash
-# Démarrage rapide
-cd backend && uvicorn main:app --reload
-cd frontend && npm run dev
-cd database && python test_connection.py
-```
+---
 
-**Production (Render Plan Hobby) :**
-- Backend : Render.com (scribe-api privé)
-- Frontend : Render.com (scribe-frontend public)
-- Database : Supabase Pro
-- Cache : Redis Cloud (optionnel)
-- Monitoring : Health checks + métriques Render intégrés
+## 🏗️ STRUCTURE AGENTS SCRIBE
 
-### Budget & Performance
-
-**Coûts Mensuels :**
-- Infrastructure : 19€ (Render Hobby) + 25€ (Supabase Pro) = 44€
-- APIs : 30-55€ (Claude + OpenAI + Perplexity + Tavily)
-- **Total : 74-99€/mois** (économie vs estimation initiale)
-
-**Targets Performance :**
-- FCP < 1s, TTI < 2s
-- API response < 200ms
-- Search RAG < 500ms
-- Cache hit rate > 80%
-
-### Sécurité & Monitoring
-
-**Sécurité :**
-- Rate limiting par endpoint
-- Input validation + sanitization
-- RLS + audit logging
-- API key rotation
-
-**Monitoring :**
-- Health checks détaillés (/health/detailed)
-- Metrics temps réel (tokens, coûts, performance)
-- Cost tracking avec alertes budget
-- Error tracking + performance APM
-
-### Structure Agents SCRIBE
-
+### Agents Production
 ```
 AGENTS/
-├── Plume/          # Agent restitution (production)
-├── Mimir/          # Agent archiviste (production)
-├── Leo/            # Architecte (build/maintenance)
-├── Koda/           # Codeur (build/développement)
-├── KodaF/          # Frontend specialist (build/UI/UX) ⭐
-├── Dako/           # Debug specialist (smart search + debug_auto) ⭐
-└── Gito/           # Git manager (build/déploiement)
+├── Plume/          # Agent restitution (capture, transcription, reformulation)
+└── Mimir/          # Agent archiviste (RAG, recherche, web search)
 ```
 
-**Agent KodaF - Frontend Enhancement Success:**
-- ✅ **Mission Complète** : Transformation UI/UX professionnelle
-- ✅ **shadcn/ui Components** : 20+ composants professionnels
-- ✅ **CVA Design System** : Variants + états + accessibilité
-- ✅ **Dark Theme + Animations** : Interface moderne fluide
-- ✅ **Mobile-First Responsive** : PWA optimisée
-- ✅ **Performance Optimized** : Lazy loading + code splitting
-- ✅ **Production Ready** : Déployé avec succès sur Render
-
-**Agent Dako - Debug Specialist:**
-- 🔧 **debug_auto Tool** : Boucle de feedback automatique avec logs Render
-- 🔍 **Smart Search** : CLAUDE.md + DEBUG.md + fichiers info projet
-- 🔄 **Auto-Loop** : maj carnet → add → commit → push → deploy → analyse logs
-- 🧹 **Cache Management** : Clear build cache automatique (échecs 3x ou aucun log)
-- ⚡ **Max Iterations** : 10 cycles debug_auto maximum
-- 🎯 **MCP Integration** : Logs Render en direct via MCP existant
+### Agents Build/Maintenance
+```
+AGENTS/
+├── Leo/            # Architecte (coordination, architecture, review)
+├── Koda/           # Codeur (backend, agents, services)
+├── KodaF/          # Frontend specialist (UI/UX, components, design)
+├── Dako/           # Debug specialist (debug_auto, smart search, logs)
+└── Gito/           # Git manager (commits, branches, déploiement)
+```
 
 ### 🤖 Agent Delegation System
 
 **Commandes de Délégation :**
 ```bash
 # KodaF - Frontend Enhancement
-kodaf → Task tool + FRONTEND_ENHANCEMENT_AGENT.md + RAG frontend
+kodaf → Task tool + CHAP1/agents/FRONTEND_ENHANCEMENT_AGENT.md
 
-# Dako - Debug Automation Specialist
-dako → Task tool + BACKEND_DEBUG_AGENT.md + Smart Search + debug_auto
+# Dako - Debug Automation
+dako → Task tool + CHAP1/agents/BACKEND_DEBUG_AGENT.md
 
 # Parallèle Multi-Terminaux
 Terminal 1: Claude Principal (Leo/Architecture)
@@ -244,72 +178,178 @@ Terminal 3: Dako Debug (Smart search + debug_auto)
 ```
 
 **Coordination Inter-Agents :**
-- **Communication** : Fichiers MD partagés (CLAUDE.md, DEBUG.md, etc.)
+- **Communication** : Fichiers MD partagés (CLAUDE.md, CHAP2_TODO, etc.)
 - **Sync Strategy** : Git commits croisés + documentation temps réel
 - **Conflict Resolution** : Claude Principal arbitrage + plans coordonnés
 
-### Important - Configuration
+---
 
-**Variables Environnement Critiques :**
+## ⚙️ CONFIGURATION ENVIRONNEMENT
+
+### Variables Environnement Critiques
+**Backend :**
 - `SUPABASE_URL` + `SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_KEY`
 - `CLAUDE_API_KEY` (agents principaux)
 - `OPENAI_API_KEY` (Whisper + embeddings)
 - `REDIS_URL` (cache performance)
-- `JWT_SECRET` + `SECRET_KEY` (sécurité)
+- `JWT_SECRET` + `SECRET_KEY` (sécurité - 64 chars minimum)
+
+**Frontend :**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 **Optionnelles :**
 - `PERPLEXITY_API_KEY` (recherche temps réel)
 - `TAVILY_API_KEY` (web search)
 
-### Instructions Build & MaJ
+### Déploiement Local
+```bash
+# Backend
+cd backend && uvicorn main:app --reload
 
+# Frontend
+cd frontend && npm run dev
+
+# Database
+cd database && python test_connection.py
+```
+
+### Production (Render.com)
+- **Backend :** scribe-api.onrender.com (privé)
+- **Frontend :** scribe-frontend-qk6s.onrender.com (public)
+- **Database :** Supabase Pro
+- **Cache :** Redis Cloud (optionnel)
+
+---
+
+## 💰 BUDGET & PERFORMANCE
+
+**Coûts Mensuels :**
+- Infrastructure : 44€ (Render 19€ + Supabase 25€)
+- APIs : 30-55€ (Claude + OpenAI + Perplexity)
+- **Total : 74-99€/mois**
+
+**Targets Performance :**
+- FCP < 1s, TTI < 2s
+- API response < 200ms
+- Search RAG < 500ms
+- Cache hit rate > 80%
+
+---
+
+## 🔐 SÉCURITÉ & MONITORING
+
+**Sécurité :**
+- Rate limiting par endpoint
+- Input validation + sanitization
+- RLS + audit logging
+- API key rotation
+
+**Monitoring :**
+- Health checks : `/health` + `/health/detailed`
+- Metrics temps réel (tokens, coûts, performance)
+- Cost tracking avec alertes budget
+- Error tracking + performance APM
+
+---
+
+## 📝 INSTRUCTIONS BUILD & MAJ
+
+### Commandes Principales
 - **"build"** → Utilisation agents Leo/Koda/Gito pour développement
 - **"maj"** → Mise à jour documentation selon contexte
+- **"maxi maj"** → Bilan exhaustif chapitre + archivage documentation + ouverture nouveau chapitre
 - **"deploy"** → Préparation déploiement avec checks complets
 - **"kodaf"** → Délégation agent KodaF pour frontend enhancement
 - **"dako"** → Délégation agent Dako pour debug automatique avec smart search
 
-### Debug Skills & Methodology ✅ EXPERTISE COMPLETE
-
-- **Backend Debug :** Voir `DEBUG.md` (13 issues résolues ✅ - scribe-api LIVE)
-- **Frontend Debug :** Voir `FRONTEND_DEBUG.md` (2 issues + Alex enhancement ✅ - scribe-frontend LIVE)
-- **Render Deploy :** Voir `RENDER_DEBUG_PROTOCOLS.md` (20+ deploy cycles → protocols ✅)
-- **Agent Delegation :** Voir `FRONTEND_ENHANCEMENT_AGENT.md` (KodaF mission brief ✅)
-- **Debug Automation :** Voir `BACKEND_DEBUG_AGENT.md` (Dako mission brief + debug_auto)
-- **Agent Smart Systems :** Voir `AGENTS_RAG_CONFIG.md` (KodaF RAG + Dako Smart Search)
-
-**Deployment Status FINAL :**
-- 🚀 **Backend Production :** scribe-api.onrender.com LIVE
-- 🚀 **Frontend Production :** scribe-frontend-qk6s.onrender.com LIVE ✅
-- 📚 **Debug Protocols :** Documented patterns pour futurs projets
-- ⭐ **UI Enhancement :** Interface professionnelle complète
-- 📊 **Debug Expertise :** 15+ issues résolues méthodiquement
-
-### Méthodologie Déploiement & Automation
-
-**Scripts Intermédiaires Intelligents :**
-- Créer des scripts Python temporaires pour tâches répétitives (ex: fix_imports.py)
-- Automatiser corrections en masse plutôt que éditions manuelles
-- Préférer l'efficacité programmatique aux approches séquentielles
-
-**Documentation Proactive :**
-- DEPLOY_ISSUES.md : Log exhaustif problèmes + solutions
-- Capitaliser sur expérience pour futurs déploiements
-- Patterns reproductibles pour scaling
-
-**Déploiement Render.com :**
-- Python version pinning obligatoire (3.12.7 + .python-version)
-- Versions flexibles requirements.txt (éviter conflits)
-- Imports absolus (pas relatifs) pour structure deployment
-- Build cache clearing pour changements majeurs
-- pydantic-settings 2.x : strings + propriétés list pour parsing arrays
-- Clés sécurité : defaults 64-char générées si variables manquantes
+### Règles Critiques
+- **TOUJOURS faire "maj" avant tout commit/push** (obligatoire)
 - Jamais signer commits au nom de Claude, toujours utilisateur
-- **TOUJOURS faire "maj" avant tout commit/push** (règle obligatoire)
-- Pydantic V2 : migration @validator → @field_validator + @classmethod + mode="before"
-- Script audit d'imports : automatiser détection modules manquants/mal importés
-- DEBUG.md : carnet de bord dédié debug deployment (extraction issues CLAUDE.md)
-- Imports state : agents.state au lieu de state (path absolu requis)
+- Clear build cache Render pour changements majeurs (Python version, deps)
+- Imports absolus backend, imports relatifs frontend
+
+---
+
+## 🔍 DEBUG & EXPERTISE
+
+**Documentation Debug (Chapitre 1) :**
+- **Backend :** `CHAP1/debug/DEBUG.md` (13 issues résolues)
+- **Frontend :** `CHAP1/debug/FRONTEND_DEBUG.md` (issues + KodaF)
+- **Deploy :** `CHAP1/debug/DEPLOY_ISSUES.md` (log exhaustif)
+- **Architecture :** `CHAP1/architecture/ARCHITECTURE_REVIEW.md` (95% alignment)
+
+**Agents Spécialisés :**
+- **KodaF :** `CHAP1/agents/FRONTEND_ENHANCEMENT_AGENT.md`
+- **Dako :** `CHAP1/agents/BACKEND_DEBUG_AGENT.md`
+- **RAG Config :** `CHAP1/agents/AGENTS_RAG_CONFIG.md`
+
+**Status Production :**
+- 🚀 Backend LIVE : scribe-api.onrender.com
+- 🚀 Frontend LIVE : scribe-frontend-qk6s.onrender.com
+- ✅ 15+ issues debug résolues méthodiquement
+- 📚 Protocols documentés pour futurs projets
+
+---
+
+## 🛠️ MÉTHODOLOGIE DÉPLOIEMENT
+
+### Scripts Intermédiaires Intelligents
+- Créer scripts Python temporaires pour tâches répétitives (ex: `fix_imports.py`)
+- Automatiser corrections en masse plutôt que éditions manuelles
+- Préférer efficacité programmatique vs approches séquentielles
+
+### Best Practices Render.com
+**✅ Ce qui marche :**
+1. Python version pinning complet (`PYTHON_VERSION=3.12.7` + `.python-version`)
+2. Versions flexibles requirements.txt (éviter conflits)
+3. Imports absolus backend (pas relatifs)
+4. Imports relatifs frontend (pas alias @)
+5. rootDir explicite dans config
+6. Clear build cache pour changements majeurs
+7. Health checks détaillés pour monitoring
+
+**❌ Pièges à éviter :**
+1. Versions partielles Python (`3.12` au lieu de `3.12.7`)
+2. Versions pinned strictes (`==`) avec conflits
+3. Imports relatifs `.` backend
+4. Alias `@` frontend (webpack resolution issues)
+5. Commenter dans yaml (inline comments = parse errors)
+6. Oublier clear cache après changements Python version
+7. Ignorer warnings build (deviennent errors production)
+
+### Checklist Déploiement
+- [ ] Tests locaux passent
+- [ ] "maj" effectuée (CLAUDE.md + docs à jour)
+- [ ] Variables environnement configurées Render
+- [ ] Build cache cleared si changement majeur
+- [ ] Commit descriptif + push
+- [ ] Monitoring logs Render
+- [ ] Health check accessible après deploy
+- [ ] Documentation résolution si erreur
+
+---
+
+## 📚 DOCUMENTATION PROJET
+
+### Structure Documentation
+```
+SCRIBE/
+├── CLAUDE.md                           # Ce fichier - Manuel référence
+├── README.md                           # Présentation projet
+├── notes.md                            # Notes diverses
+│
+├── CHAP1/                              # Chapitre 1 : Les Bases ✅
+│   ├── CHAP1_BILAN_LES_BASES.md       # Bilan exhaustif
+│   ├── debug/                          # Debug documentation
+│   ├── agents/                         # Agents mission briefs
+│   ├── deploy/                         # Déploiement guides
+│   ├── architecture/                   # Architecture review
+│   └── setup/                          # Setup & configuration
+│
+└── CHAP2/                              # Chapitre 2 : Sur le Chantier 🚧
+    └── CHAP2_TODO_SUR_LE_CHANTIER.md  # Roadmap détaillée
+```
 
 ---
 
@@ -318,3 +358,7 @@ Terminal 3: Dako Debug (Smart search + debug_auto)
 > Système autonome prêt pour extraction et déploiement indépendant
 >
 > Développé avec l'architecture EMPYR - Leo, Architecte Principal
+>
+> **Chapitre 1 :** ✅ Les Bases (COMPLET - voir `CHAP1/CHAP1_BILAN_LES_BASES.md`)
+>
+> **Chapitre 2 :** 🚧 Sur le Chantier (EN COURS - voir `CHAP2/CHAP2_TODO_SUR_LE_CHANTIER.md`)

@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 
 from agents.state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
 from services.transcription import transcription_service
@@ -17,7 +17,10 @@ from services.embeddings import embedding_service
 from services.rag import rag_service
 from services.storage import supabase_client
 from services.cache import cache_manager
+from services.intent_classifier import intent_classifier
+from services.memory_service import memory_service
 from utils.logger import get_agent_logger, get_logger
+from config import settings
 
 logger = get_logger(__name__)
 
@@ -43,12 +46,18 @@ class PlumeOrchestrator:
             # Build the workflow graph
             self.graph = self._build_graph()
 
-            # Compile the workflow with memory
-            memory = MemorySaver()
-            self.app = self.graph.compile(checkpointer=memory)
+            # Setup PostgreSQL checkpointing with Supabase
+            checkpointer = PostgresSaver.from_conn_string(settings.DATABASE_URL)
+
+            # Setup checkpoint table (creates if doesn't exist)
+            await checkpointer.setup()
+            logger.info("PostgreSQL checkpointer initialized with Supabase")
+
+            # Compile the workflow with persistent checkpointing
+            self.app = self.graph.compile(checkpointer=checkpointer)
 
             self._initialized = True
-            logger.info("Orchestrator initialized successfully")
+            logger.info("Orchestrator initialized successfully with persistent memory")
 
         except Exception as e:
             logger.error("Failed to initialize orchestrator", error=str(e))
@@ -127,7 +136,9 @@ class PlumeOrchestrator:
     # =============================================================================
 
     async def intake_node(self, state: AgentState) -> AgentState:
-        """Initial processing of user input"""
+        """
+        Initial processing of user input with conversation memory loading
+        """
         logger.info("Processing intake", input_length=len(state.get("input", "")))
 
         add_processing_step(state, "intake_processing")
@@ -142,6 +153,36 @@ class PlumeOrchestrator:
             # Set session ID if not provided
             if not state.get("session_id"):
                 state["session_id"] = f"session_{int(time.time())}"
+
+            # Load conversation memory if conversation_id provided
+            conversation_id = state.get("conversation_id")
+            user_id = state.get("user_id")
+
+            if conversation_id:
+                try:
+                    # Get conversation context (short + long term + preferences)
+                    memory_context = await memory_service.get_conversation_context(
+                        conversation_id=conversation_id,
+                        user_id=user_id,
+                        include_long_term=True
+                    )
+
+                    # Enrich state with memory context
+                    state["recent_messages"] = memory_context.get("recent_messages", [])
+                    state["similar_past_conversations"] = memory_context.get("similar_past_conversations", [])
+                    state["user_preferences"] = memory_context.get("user_preferences", {})
+                    state["conversation_summary"] = memory_context.get("conversation_summary", "")
+
+                    logger.info(
+                        "Conversation memory loaded",
+                        conversation_id=conversation_id,
+                        recent_messages_count=len(state["recent_messages"]),
+                        similar_past_count=len(state["similar_past_conversations"])
+                    )
+
+                except Exception as e:
+                    logger.warning("Failed to load conversation memory", error=str(e))
+                    # Continue without memory context
 
             logger.info("Intake processing completed", session_id=state["session_id"])
             return state
@@ -218,11 +259,11 @@ class PlumeOrchestrator:
 
             # Auto-routing logic
             elif mode == "auto":
-                # Analyze input to decide routing
-                routing_decision = await self._analyze_input_for_routing(input_text)
+                # Analyze input to decide routing with intent classification
+                routing_decision = await self._analyze_input_for_routing(input_text, state)
 
                 state["agent_used"] = routing_decision
-                logger.info("Auto-routed", decision=routing_decision)
+                logger.info("Auto-routed with intent classification", decision=routing_decision)
                 return state
 
             else:
@@ -381,7 +422,9 @@ class PlumeOrchestrator:
             return state
 
     async def storage_node(self, state: AgentState) -> AgentState:
-        """Store conversation and results"""
+        """
+        Store conversation and results with memory persistence
+        """
         logger.info("Storing conversation results")
 
         add_processing_step(state, "storage_operation")
@@ -390,6 +433,24 @@ class PlumeOrchestrator:
             if not state.get("should_save", True):
                 state["storage_status"] = "skipped"
                 return state
+
+            conversation_id = state.get("conversation_id")
+
+            # Store user message first if conversation_id exists
+            if conversation_id:
+                user_message_id = await memory_service.store_message(
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=state.get("input", ""),
+                    metadata={
+                        "session_id": state.get("session_id"),
+                        "timestamp": datetime.utcnow().isoformat()
+                    },
+                    create_embedding=True
+                )
+
+                if user_message_id:
+                    logger.info("User message stored", message_id=user_message_id)
 
             # Prepare note data
             note_data = {
@@ -400,6 +461,7 @@ class PlumeOrchestrator:
                     "agent_used": state.get("agent_used"),
                     "agents_involved": state.get("agents_involved", []),
                     "session_id": state.get("session_id"),
+                    "conversation_id": conversation_id,
                     "processing_time_ms": state.get("processing_time_ms"),
                     "tokens_used": state.get("tokens_used", 0),
                     "cost_eur": state.get("cost_eur", 0.0),
@@ -420,6 +482,25 @@ class PlumeOrchestrator:
 
                 # Create embeddings for future retrieval
                 asyncio.create_task(self._create_embeddings_async(result["id"], note_data["content"]))
+
+                # Store agent response in conversation if conversation_id exists
+                if conversation_id:
+                    agent_message_id = await memory_service.store_message(
+                        conversation_id=conversation_id,
+                        role=state.get("agent_used", "system"),
+                        content=state.get("final_output", ""),
+                        metadata={
+                            "note_id": result["id"],
+                            "processing_time_ms": state.get("processing_time_ms"),
+                            "tokens_used": state.get("tokens_used", 0),
+                            "cost_eur": state.get("cost_eur", 0.0),
+                            "timestamp": datetime.utcnow().isoformat()
+                        },
+                        create_embedding=True
+                    )
+
+                    if agent_message_id:
+                        logger.info("Agent response stored", message_id=agent_message_id)
 
             else:
                 state["storage_status"] = "failed"
@@ -499,24 +580,62 @@ class PlumeOrchestrator:
     # HELPER METHODS
     # =============================================================================
 
-    async def _analyze_input_for_routing(self, input_text: str) -> str:
-        """Analyze input to determine optimal routing"""
+    async def _analyze_input_for_routing(self, input_text: str, state: AgentState = None) -> str:
+        """
+        Analyze input to determine optimal routing using intent classification
+
+        Args:
+            input_text: User input to classify
+            state: Current state (for conversation context)
+
+        Returns:
+            Agent name: "plume", "mimir", or "discussion"
+        """
         try:
-            # Simple heuristics for now (could be enhanced with ML)
-            lower_input = input_text.lower()
+            # Get conversation context if available
+            conversation_context = state.get("context", []) if state else None
 
-            # Questions typically go to Mimir for knowledge retrieval
-            question_indicators = ["?", "comment", "pourquoi", "qu'est", "que", "qui", "où", "quand", "combien"]
-            if any(indicator in lower_input for indicator in question_indicators):
-                return "mimir"
+            # Classify intent
+            classification = await intent_classifier.classify(
+                input_text=input_text,
+                conversation_context=conversation_context
+            )
 
-            # Complex topics might benefit from discussion
-            complex_indicators = ["expliquer", "analyser", "comparer", "différence", "avantages", "inconvénients"]
-            if any(indicator in lower_input for indicator in complex_indicators) and len(input_text) > 100:
-                return "discussion"
+            intent = classification["intent"]
+            confidence = classification["confidence"]
+            reasoning = classification["reasoning"]
 
-            # Default to Plume for simple restitution
-            return "plume"
+            logger.info(
+                "Intent classification for routing",
+                intent=intent,
+                confidence=confidence,
+                reasoning=reasoning,
+                method=classification.get("method")
+            )
+
+            # Map intent to agent
+            intent_to_agent = {
+                "restitution": "plume",
+                "recherche": "mimir",
+                "discussion": "discussion"
+            }
+
+            agent = intent_to_agent.get(intent, "plume")
+
+            # Store classification result in state for debugging/monitoring
+            if state:
+                if "routing_metadata" not in state:
+                    state["routing_metadata"] = {}
+                state["routing_metadata"]["classification"] = classification
+
+            logger.info(
+                "Routing decision",
+                agent=agent,
+                intent=intent,
+                confidence=confidence
+            )
+
+            return agent
 
         except Exception as e:
             logger.warning("Failed to analyze input for routing, defaulting to Plume", error=str(e))
@@ -553,9 +672,26 @@ class PlumeOrchestrator:
         voice_data: Optional[str] = None,
         audio_format: Optional[str] = None,
         session_id: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         context_ids: Optional[List[str]] = None
     ) -> Dict[str, Any]:
-        """Main entry point for processing user input"""
+        """
+        Main entry point for processing user input with conversation memory
+
+        Args:
+            input_text: User input message
+            mode: Routing mode (auto, plume, mimir, discussion)
+            voice_data: Base64 audio data if voice input
+            audio_format: Audio format (webm, mp3, etc.)
+            session_id: Session identifier for checkpointing
+            conversation_id: Conversation ID for memory context
+            user_id: User ID for preferences and long-term memory
+            context_ids: Specific document IDs to use as context
+
+        Returns:
+            Response dictionary with agent output and metadata
+        """
 
         if not self._initialized:
             await self.initialize()
@@ -568,6 +704,8 @@ class PlumeOrchestrator:
             voice_data=voice_data,
             audio_format=audio_format,
             session_id=session_id,
+            conversation_id=conversation_id,
+            user_id=user_id,
             context_ids=context_ids
         )
 
