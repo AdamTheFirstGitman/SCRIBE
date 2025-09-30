@@ -13,7 +13,7 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system')
+  const [theme, setThemeState] = useState<Theme>('dark')
   const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light'>('dark')
   const [mounted, setMounted] = useState(false)
 
@@ -73,11 +73,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme)
   }
 
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return <>{children}</>
-  }
-
+  // IMPORTANT: Always provide the Context, even before mounted
+  // This prevents crashes when components try to use useTheme during hydration
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
