@@ -904,12 +904,13 @@ Tailwind est un PLUGIN PostCSS!
 Sans postcss.config.js, Tailwind n'est JAMAIS exécuté.
 ```
 
-**Statut:** ✅ RÉSOLU
+**Statut:** ✅ RÉSOLU (avec follow-up Issue #4b)
 - PostCSS config créé et fonctionnel
 - Plugins Tailwind installés (typography, forms, container-queries)
 - CSS correctement compilé (classes Tailwind → vraies propriétés CSS)
 - Build local testé et validé
-- Push vers Render pour redéployment
+- **Issue #4b:** Packages déplacés vers dependencies (voir ci-dessous)
+- Deploy Render réussi ✅
 
 **Leçons apprises:**
 1. **PostCSS config OBLIGATOIRE** pour Tailwind CSS avec Next.js
@@ -919,6 +920,125 @@ Sans postcss.config.js, Tailwind n'est JAMAIS exécuté.
 5. Inspecter le CSS compilé (`.next/static/css/*.css`) pour debug Tailwind issues
 6. Si directives `@tailwind` ou `@apply` présentes dans CSS final = PostCSS pas exécuté
 7. Clean rebuild (`rm -rf node_modules .next && npm i`) résout cache conflicts
+
+---
+
+### Issue #4b: Tailwind Packages en devDependencies (RÉSOLU)
+
+**Symptômes (après commit `82522d7` déployé sur Render):**
+```
+Error: Cannot find module 'tailwindcss'
+Require stack:
+- /opt/render/project/src/frontend/node_modules/next/dist/build/webpack/config/blocks/css/plugins.js
+```
+
+**Diagnostic:**
+1. Build local réussit ✅
+2. Build Render échoue ❌
+3. Erreur pendant chargement plugins PostCSS
+4. Tailwind/PostCSS introuvables malgré package.json contenant ces packages
+
+**Cause racine:**
+```json
+// ❌ package.json (avant fix)
+{
+  "dependencies": { ... },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.6",
+    "autoprefixer": "^10.4.21",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/container-queries": "^0.1.1"
+  }
+}
+```
+
+**Pourquoi Render échouait:**
+```bash
+# Local dev:
+npm install  # Installe dependencies + devDependencies ✅
+
+# Render production:
+npm ci  # --production flag implicite
+        # Skip devDependencies ❌
+        # Tailwind absent → Build fail
+```
+
+**Différence npm install vs npm ci en production:**
+- `npm install`: Installe tout (dev + prod)
+- `npm ci --production`: **Skip devDependencies** (comportement par défaut Render)
+- Next.js **nécessite** Tailwind pendant `npm run build`
+- Build = production process, mais Tailwind requis pour compiler CSS
+
+**Solution appliquée (commit `4186739`):**
+
+Déplacé vers `dependencies` (prod packages):
+```json
+{
+  "dependencies": {
+    // ... autres packages
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.6",
+    "autoprefixer": "^10.4.21",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/container-queries": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "^14.2.15"
+  }
+}
+```
+
+**Règle générale dependencies vs devDependencies:**
+```
+dependencies:
+- Packages requis pendant BUILD (npm run build)
+- Packages requis pendant RUNTIME (npm start)
+- Ex: Tailwind, PostCSS (build-time), React, Next.js (runtime)
+
+devDependencies:
+- Packages requis UNIQUEMENT en développement local
+- Jamais utilisés en production
+- Ex: TypeScript types, ESLint, test frameworks
+```
+
+**Résultats:**
+```bash
+# Build local:
+✓ Compiled successfully
+✓ Generating static pages (9/9)
+
+# Push to Render:
+✓ npm ci (installe dependencies incluant Tailwind)
+✓ npm run build (Tailwind disponible)
+✓ Deploy successful
+✓ Frontend live avec tous les styles Tailwind appliqués
+```
+
+**Feedback utilisateur (après deploy):**
+> "ok super ça a marché c'est clean"
+
+**Statut:** ✅ RÉSOLU - Production fully functional
+- Tailwind packages dans dependencies
+- Build Render réussi
+- Frontend 100% fonctionnel avec styles CSS complets
+- Navigation responsive OK
+- Theme toggle opérationnel
+- Animations framer-motion actives
+
+**Leçons apprises:**
+1. **Tailwind + PostCSS = dependencies** (pas devDependencies) car requis pendant build
+2. `npm ci --production` skip devDependencies (comportement par défaut plateformes hébergement)
+3. Toujours tester avec `npm ci` (pas juste `npm install`) pour reproduire environnement prod
+4. Règle: Si package utilisé dans `npm run build` → dependencies
+5. Local dev fonctionne même si mal catégorisé (install tout), mais prod échoue
+6. Render logs montrent clairement quel module est introuvable
 
 ---
 
