@@ -87,7 +87,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext)
+  // During SSR, return default values instead of throwing
   if (context === undefined) {
+    if (typeof window === 'undefined') {
+      // Server-side: return default values
+      return {
+        theme: 'dark' as const,
+        resolvedTheme: 'dark' as const,
+        setTheme: () => {},
+      }
+    }
     throw new Error('useTheme must be used within a ThemeProvider')
   }
   return context
