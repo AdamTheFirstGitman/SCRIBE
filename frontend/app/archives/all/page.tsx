@@ -10,7 +10,6 @@ import { Button } from '../../../components/ui/button'
 import { EmptyState } from '../../../components/ui/empty-state'
 import { Note } from '../../../lib/types'
 import { getAllNotes } from '../../../lib/api/client'
-import { getErrorMessage } from '../../../lib/api/error-handler'
 import { toast } from 'sonner'
 
 function AllNotesPage() {

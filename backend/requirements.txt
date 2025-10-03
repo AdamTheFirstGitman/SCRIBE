@@ -37,6 +37,7 @@ numpy>=1.24.0
 # Text Processing
 beautifulsoup4==4.12.3
 markdown==3.7.0
+bleach>=6.0.0
 
 # Security & Auth
 python-jose[cryptography]==3.3.0
