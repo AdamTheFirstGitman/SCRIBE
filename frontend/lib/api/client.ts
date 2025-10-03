@@ -204,7 +204,7 @@ export async function getConversation(id: string): Promise<{ conversation: Conve
       role: m.role,
       content: m.content,
       timestamp: parseDate(m.created_at),
-      metadata: m.metadata
+      ...(m.metadata ? { metadata: m.metadata } : {})
     }))
   }
 }
@@ -460,10 +460,10 @@ export async function sendChatMessage(message: string, context?: string): Promis
     content: data.response,
     timestamp: new Date(),
     metadata: {
-      clickable_objects: data.metadata.clickable_objects,
-      processing_time: data.metadata.processing_time,
-      tokens_used: data.metadata.tokens_used,
-      cost_eur: data.metadata.cost_eur
+      ...(data.metadata.clickable_objects ? { clickable_objects: data.metadata.clickable_objects } : {}),
+      ...(data.metadata.processing_time !== undefined ? { processing_time: data.metadata.processing_time } : {}),
+      ...(data.metadata.tokens_used !== undefined ? { tokens_used: data.metadata.tokens_used } : {}),
+      ...(data.metadata.cost_eur !== undefined ? { cost_eur: data.metadata.cost_eur } : {})
     }
   }
 }
