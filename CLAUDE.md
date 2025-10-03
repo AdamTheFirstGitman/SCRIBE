@@ -112,24 +112,36 @@ services:
 - ✅ 15+ issues debug résolues
 - ✅ Agents KodaF (UI) + Dako (debug) créés
 
-### 🚧 Chapitre 2 : Sur le Chantier (EN COURS)
+### ✅ Chapitre 2 : Architecture Agentique (DÉPLOYÉ EN PRODUCTION)
 **Voir roadmap détaillée :** `CHAP2/CHAP2_TODO_SUR_LE_CHANTIER.md`
 
-**Objectifs prioritaires :**
+**🎯 Architecture Agentique Avancée - 🚀 DÉPLOYÉE**
+- [x] LangGraph orchestrator complet (Phase 2.2) - ✅ PRODUCTION
+  - [x] 9 nodes workflow (routing, discussion, context, storage, finalize)
+  - [x] Intent classifier (keyword + LLM modes)
+  - [x] Memory service (court terme + long terme)
+  - [x] Checkpoint system (conversation state)
+
+- [x] AutoGen v0.4 multi-agent (Phase 2.2) - ✅ PRODUCTION
+  - [x] Discussion collaborative Plume + Mimir
+  - [x] SSE streaming temps réel (`/api/v1/chat/orchestrated/stream`)
+  - [x] Capture messages internes agents
+  - [x] Termination conditions intelligentes
+
+- [x] Architecture agent-centric (Phase 2.3) - 🚀 DÉPLOYÉE 03/10/2025
+  - [x] 5 tools complets (search_knowledge, web_search, get_related_content, create_note, update_note)
+  - [x] PLUME_TOOLS: [create_note, update_note] - Agents décident quand stocker
+  - [x] MIMIR_TOOLS: [search_knowledge, web_search, get_related_content] - Agents décident quand chercher
+  - [x] Tests: 14/14 passés (7 unitaires + 7 intégration)
+  - [x] Migration 004: hybrid_search SQL fix appliquée
+
+**📋 Roadmap Future (Phase 2.4+) :**
 - [ ] UX/UI Professionnelle Complète
   - [ ] Dark/Light mode toggle
   - [ ] Animations avancées (framer-motion)
   - [ ] Keyboard shortcuts système
   - [ ] Accessibility A11Y complet
   - [ ] Onboarding interactif
-
-- [x] Architecture Agentique Avancée ✅ COMPLÉTÉE
-  - [x] LangGraph orchestrator complet (Phase 2.2)
-  - [x] AutoGen v0.4 multi-agent discussions (Phase 2.2)
-  - [x] Architecture agent-centric avec tools (Phase 2.3)
-  - [x] Tools complets (5 tools: search_knowledge, web_search, get_related_content, create_note, update_note)
-  - [x] Memory partagée agents (Phase 2.2)
-  - [x] Routing automatique intelligent (Phase 2.2)
 
 - [ ] Features Avancées
   - [ ] Streaming Chat (Vercel AI SDK)

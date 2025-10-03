@@ -115,9 +115,10 @@ CHAP2/
 
 ---
 
-### **Phase 2.3 - Architecture Agent-Centric avec Tools** ✅ **COMPLÉTÉ**
+### **Phase 2.3 - Architecture Agent-Centric avec Tools** 🚀 **DÉPLOYÉ EN PRODUCTION**
 **Document :** `CHAP2/CR_PHASE2.3_COMPLETE.md`
 **Enseignements :** `CHAP2/ENSEIGNEMENTS_PHASE2.3.md`
+**Date déploiement :** 3 octobre 2025
 
 **Réalisations :**
 - ✅ 5 tools agents implémentés (search_knowledge, web_search, get_related_content, create_note, update_note)
@@ -127,24 +128,29 @@ CHAP2/
 - ✅ Tests : 14/14 passés (7 unitaires + 7 intégration)
 - ✅ Fix supabase_client initialization au startup
 - ✅ Fix rag_service.py imports et méthodes
+- 🚀 Migration 004 appliquée en production (hybrid_search SQL fix)
+- 🚀 Backend LIVE : https://scribe-api-uj22.onrender.com
+- 🚀 Frontend LIVE : https://scribe-frontend-qk6s.onrender.com
 
 **Apprentissages Majeurs :**
 - 💡 Architecture agent-centric vs orchestrator-centric
 - 💡 Docstrings détaillées = instructions pour agents
 - 💡 Tests intégration révèlent problèmes réels
 - 💡 10 patterns et best practices consolidés
+- 💡 TypeScript exactOptionalPropertyTypes nécessite conditional spreads
 
 ---
 
 ## 📊 PROGRESSION GLOBALE CHAPITRE 2
 
-| Phase | Status | Durée | Tests | Documentation |
-|-------|--------|-------|-------|---------------|
-| 2.1 LangGraph Orchestrator | ✅ Complété | ~3h | ✅ | ✅ Exhaustive |
-| 2.2 UX + AutoGen Streaming | ✅ Complété | ~5h | ✅ | ✅ Exhaustive |
-| 2.3 Agent-Centric Tools | ✅ Complété | ~2h | ✅ 14/14 | ✅ Exhaustive |
+| Phase | Status | Durée | Tests | Documentation | Production |
+|-------|--------|-------|-------|---------------|------------|
+| 2.1 LangGraph Orchestrator | ✅ Complété | ~3h | ✅ | ✅ Exhaustive | 🚀 LIVE |
+| 2.2 UX + AutoGen Streaming | ✅ Complété | ~5h | ✅ | ✅ Exhaustive | 🚀 LIVE |
+| 2.3 Agent-Centric Tools | ✅ Complété | ~2h | ✅ 14/14 | ✅ Exhaustive | 🚀 LIVE (03/10/2025) |
 
 **Progression globale Chapitre 2 :** 100% (Architecture agentique complète)
+**Status Production :** 🚀 **DÉPLOYÉ** - Backend + Frontend + Database opérationnels
 
 ---
 
@@ -197,4 +203,4 @@ CHAP2/
 ---
 
 *Documentation maintenue à jour par agents build/maintenance*
-*Dernière mise à jour : 1er octobre 2025 - Phase 2.3 complétée*
+*Dernière mise à jour : 3 octobre 2025 - Phase 2.3 déployée en production 🚀*

@@ -1,11 +1,11 @@
 -- Migration 004: Fix hybrid_search function SQL error
 -- Issue: SELECT DISTINCT with ORDER BY expression not in select list
--- Error: 'for SELECT DISTINCT, ORDER BY expressions must appear in select list', code: '42P10'
+-- Error code: 42P10
 -- Fix: Remove DISTINCT (unnecessary since e.id is unique)
 -- Date: 2025-10-01
 -- Phase: 2.2 Backend SSE Streaming
+-- Applied: 2025-10-03 via Supabase SQL Editor
 
--- Drop and recreate hybrid_search function without DISTINCT
 CREATE OR REPLACE FUNCTION hybrid_search(
     query_text TEXT,
     query_embedding vector(1536) DEFAULT NULL,
@@ -55,5 +55,4 @@ BEGIN
 END;
 $$;
 
--- Add comment
-COMMENT ON FUNCTION hybrid_search IS 'Hybrid search combining vector similarity and fulltext search (Fixed: removed DISTINCT to allow complex ORDER BY)';
+COMMENT ON FUNCTION hybrid_search IS 'Hybrid search combining vector similarity and fulltext search';
