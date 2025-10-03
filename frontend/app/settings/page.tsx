@@ -1,295 +1,181 @@
 'use client'
 
-import { useState } from 'react'
-import { useTheme } from '../../components/theme/ThemeProvider'
+import { useState, useEffect } from 'react'
+import { FileText, MessageSquare, Coins, Zap } from 'lucide-react'
+import { ProtectedRoute } from '../../components/auth/ProtectedRoute'
+import { Navigation } from '../../components/layout/Navigation'
+import { Card, CardContent } from '../../components/ui/card'
+import { Button } from '../../components/ui/button'
 import { ThemeToggle } from '../../components/theme/ThemeToggle'
-import { Feather, Brain, Trash2, Download, Info } from 'lucide-react'
+import { useSession } from '../../lib/hooks/useSession'
+import { Metrics } from '../../lib/types'
+import { getMetrics } from '../../lib/api/client'
+import { getErrorMessage } from '../../lib/api/error-handler'
 import { toast } from 'sonner'
 
-export default function SettingsPage() {
-  const { theme } = useTheme()
-  const [defaultAgent, setDefaultAgent] = useState<'plume' | 'mimir'>('plume')
-  const [voiceEnabled, setVoiceEnabled] = useState(true)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+function SettingsPage() {
+  const { logout } = useSession()
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleClearCache = () => {
-    if (confirm('Êtes-vous sûr de vouloir vider le cache ?')) {
-      localStorage.clear()
-      toast.success('Cache vidé avec succès')
+  useEffect(() => {
+    loadMetrics()
+  }, [])
+
+  const loadMetrics = async () => {
+    try {
+      const data = await getMetrics()
+      setMetrics(data)
+    } catch (error) {
+      console.error('Failed to load metrics:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleExportData = () => {
-    const data = {
-      settings: {
-        theme,
-        defaultAgent,
-        voiceEnabled,
-        notificationsEnabled,
-      },
-      exportDate: new Date().toISOString(),
+  const handleLogout = () => {
+    if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+      logout()
     }
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `scribe-settings-${Date.now()}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    toast.success('Paramètres exportés')
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-50 dark:text-gray-50 light:text-gray-900">
-            Paramètres
-          </h1>
-          <p className="text-gray-400 dark:text-gray-400 light:text-gray-600 mt-2">
-            Configure ton expérience avec Plume & Mimir
-          </p>
-        </div>
+    <div className="min-h-screen">
+      <Navigation />
 
-        {/* Appearance Section */}
-        <section className="card p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-50 dark:text-gray-50 light:text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-plume-500/20 dark:bg-plume-500/20 light:bg-plume-100 flex items-center justify-center">
-              🎨
-            </div>
-            Apparence
-          </h2>
+      <main className="max-w-4xl mx-auto p-4 space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Paramètres</h1>
 
-          <div className="space-y-4">
-            {/* Theme Toggle */}
-            <div className="flex items-center justify-between py-3 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <div>
-                <label className="text-sm font-medium text-gray-200 dark:text-gray-200 light:text-gray-900">
-                  Thème
-                </label>
-                <p className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600 mt-1">
-                  Choisis entre dark, light, ou system
-                </p>
-              </div>
-              <ThemeToggle />
-            </div>
+        {/* Section 1: Metrics Dashboard */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-50">Statistiques</h2>
 
-            {/* Current Theme Info */}
-            <div className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600">
-              Thème actuel: <span className="font-medium capitalize">{theme}</span>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-200"></div>
             </div>
-          </div>
+          ) : metrics ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <FileText className="h-6 w-6 mx-auto mb-2 text-plume-500" />
+                  <p className="text-3xl font-bold text-plume-500">
+                    {metrics.total_notes}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Notes</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <MessageSquare className="h-6 w-6 mx-auto mb-2 text-mimir-500" />
+                  <p className="text-3xl font-bold text-mimir-500">
+                    {metrics.total_conversations}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Conversations</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Zap className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
+                  <p className="text-3xl font-bold text-yellow-500">
+                    {(metrics.total_tokens ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Tokens</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Coins className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                  <p className="text-3xl font-bold text-green-500">
+                    {(metrics.total_cost_eur ?? 0).toFixed(2)} €
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Coût total</p>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <p className="text-gray-600 dark:text-gray-400 text-center py-8">
+              Impossible de charger les statistiques
+            </p>
+          )}
         </section>
 
-        {/* Agents Section */}
-        <section className="card p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-50 dark:text-gray-50 light:text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-mimir-500/20 dark:bg-mimir-500/20 light:bg-mimir-100 flex items-center justify-center">
-              🤖
-            </div>
-            Agents
-          </h2>
-
-          <div className="space-y-4">
-            {/* Default Agent */}
-            <div className="py-3 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <label className="text-sm font-medium text-gray-200 dark:text-gray-200 light:text-gray-900 block mb-3">
-                Agent par défaut
-              </label>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDefaultAgent('plume')}
-                  className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                    defaultAgent === 'plume'
-                      ? 'border-plume-500 bg-plume-500/10 dark:bg-plume-500/10 light:bg-plume-50'
-                      : 'border-gray-800 dark:border-gray-800 light:border-gray-200 hover:border-gray-700 dark:hover:border-gray-700 light:hover:border-gray-300'
-                  }`}
-                >
-                  <Feather className="w-5 h-5 text-plume-500" />
-                  <div className="text-left">
-                    <div className="font-medium text-gray-50 dark:text-gray-50 light:text-gray-900">
-                      Plume
-                    </div>
-                    <div className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600">
-                      Restitution
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setDefaultAgent('mimir')}
-                  className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                    defaultAgent === 'mimir'
-                      ? 'border-mimir-500 bg-mimir-500/10 dark:bg-mimir-500/10 light:bg-mimir-50'
-                      : 'border-gray-800 dark:border-gray-800 light:border-gray-200 hover:border-gray-700 dark:hover:border-gray-700 light:hover:border-gray-300'
-                  }`}
-                >
-                  <Brain className="w-5 h-5 text-mimir-500" />
-                  <div className="text-left">
-                    <div className="font-medium text-gray-50 dark:text-gray-50 light:text-gray-900">
-                      Mimir
-                    </div>
-                    <div className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600">
-                      Recherche
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Voice Transcription */}
-            <div className="flex items-center justify-between py-3 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <div>
-                <label className="text-sm font-medium text-gray-200 dark:text-gray-200 light:text-gray-900">
-                  Transcription vocale
-                </label>
-                <p className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600 mt-1">
-                  Active la transcription automatique
-                </p>
-              </div>
-              <button
-                onClick={() => setVoiceEnabled(!voiceEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  voiceEnabled
-                    ? 'bg-plume-500'
-                    : 'bg-gray-700 dark:bg-gray-700 light:bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    voiceEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Notifications */}
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <label className="text-sm font-medium text-gray-200 dark:text-gray-200 light:text-gray-900">
-                  Notifications
-                </label>
-                <p className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600 mt-1">
-                  Reçois des notifications pour les événements
-                </p>
-              </div>
-              <button
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notificationsEnabled
-                    ? 'bg-plume-500'
-                    : 'bg-gray-700 dark:bg-gray-700 light:bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Data Management Section */}
-        <section className="card p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-50 dark:text-gray-50 light:text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 dark:bg-blue-500/20 light:bg-blue-100 flex items-center justify-center">
-              💾
-            </div>
-            Données
-          </h2>
-
-          <div className="space-y-3">
-            {/* Export Settings */}
-            <button
-              onClick={handleExportData}
-              className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-800 dark:border-gray-800 light:border-gray-200 hover:border-gray-700 dark:hover:border-gray-700 light:hover:border-gray-300 transition-colors text-left"
-            >
-              <div className="flex items-center gap-3">
-                <Download className="w-5 h-5 text-blue-500" />
+        {/* Section 2: Preferences */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-50">Préférences</h2>
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-200 dark:text-gray-200 light:text-gray-900">
-                    Exporter les paramètres
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 light:text-gray-600">
-                    Télécharge tes préférences
-                  </div>
+                  <p className="font-medium">Thème</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Clair, sombre ou automatique
+                  </p>
+                </div>
+                <ThemeToggle />
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+                <p className="font-medium mb-2">Raccourcis clavier</p>
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p>⌘ K - Palette de commandes</p>
+                  <p>⌘ / - Aide</p>
+                  <p>⌘ B - Toggle sidebar</p>
                 </div>
               </div>
-            </button>
+            </CardContent>
+          </Card>
+        </section>
 
-            {/* Clear Cache */}
-            <button
-              onClick={handleClearCache}
-              className="w-full flex items-center justify-between p-4 rounded-lg border border-red-900/30 dark:border-red-900/30 light:border-red-200 hover:border-red-800 dark:hover:border-red-800 light:hover:border-red-300 transition-colors text-left"
-            >
-              <div className="flex items-center gap-3">
-                <Trash2 className="w-5 h-5 text-red-500" />
+        {/* Section 3: Account */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-50">Compte</h2>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-sm font-medium text-red-400 dark:text-red-400 light:text-red-600">
-                    Vider le cache
-                  </div>
-                  <div className="text-xs text-red-400/60 dark:text-red-400/60 light:text-red-600/70">
-                    Supprime toutes les données locales
-                  </div>
+                  <p className="font-medium">Utilisateur</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">king_001</p>
                 </div>
               </div>
-            </button>
-          </div>
+
+              <Button
+                variant="destructive"
+                onClick={handleLogout}
+                className="w-full"
+              >
+                Se déconnecter
+              </Button>
+            </CardContent>
+          </Card>
         </section>
 
-        {/* About Section */}
-        <section className="card p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-50 dark:text-gray-50 light:text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gray-700/50 dark:bg-gray-700/50 light:bg-gray-200 flex items-center justify-center">
-              <Info className="w-4 h-4" />
-            </div>
-            À propos
-          </h2>
-
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <span className="text-gray-400 dark:text-gray-400 light:text-gray-600">
-                Application
-              </span>
-              <span className="text-gray-200 dark:text-gray-200 light:text-gray-900 font-medium">
-                Plume & Mimir
-              </span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <span className="text-gray-400 dark:text-gray-400 light:text-gray-600">
-                Version
-              </span>
-              <span className="text-gray-200 dark:text-gray-200 light:text-gray-900 font-medium">
-                2.0.0 (Chapitre 2)
-              </span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
-              <span className="text-gray-400 dark:text-gray-400 light:text-gray-600">
-                Développé par
-              </span>
-              <span className="text-gray-200 dark:text-gray-200 light:text-gray-900 font-medium">
-                EMPYR Team
-              </span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-400 dark:text-gray-400 light:text-gray-600">
-                Architecte
-              </span>
-              <span className="text-gray-200 dark:text-gray-200 light:text-gray-900 font-medium">
-                Leo
-              </span>
-            </div>
-          </div>
+        {/* Section 4: About */}
+        <section>
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-gray-600 dark:text-gray-400">
+              <p className="mb-1">
+                <span className="font-semibold bg-gradient-to-r from-plume-500 to-mimir-500 bg-clip-text text-transparent">
+                  SCRIBE
+                </span>{' '}
+                - Phase 2.2
+              </p>
+              <p>Plume & Mimir - Système de gestion de connaissances</p>
+            </CardContent>
+          </Card>
         </section>
-      </div>
+      </main>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <ProtectedRoute>
+      <SettingsPage />
+    </ProtectedRoute>
   )
 }

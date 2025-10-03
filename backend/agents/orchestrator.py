@@ -35,6 +35,7 @@ class PlumeOrchestrator:
         self.graph = None
         self.app = None
         self._initialized = False
+        self._current_sse_queue = None  # Store SSE queue as instance variable to avoid msgpack serialization
 
     async def initialize(self):
         """Initialize the orchestrator and compile the workflow"""
@@ -234,7 +235,7 @@ class PlumeOrchestrator:
             return state
 
     async def router_node(self, state: AgentState) -> AgentState:
-        """Route to appropriate agent based on input and mode"""
+        """Route to appropriate agent based on input, mode, and explicit agent mentions"""
         logger.info("Routing request", mode=state.get("mode", "auto"))
 
         add_processing_step(state, "routing_decision")
@@ -242,30 +243,58 @@ class PlumeOrchestrator:
         try:
             input_text = state.get("input", "")
             mode = state.get("mode", "auto")
+            input_lower = input_text.lower()
 
+            # Check for explicit agent mention by name (highest priority)
+            plume_mentioned = "plume" in input_lower
+            mimir_mentioned = "mimir" in input_lower
+
+            if plume_mentioned and mimir_mentioned:
+                # Both mentioned → discussion mode
+                state["agent_used"] = "discussion"
+                state["routing_reason"] = "both_agents_mentioned"
+                logger.info("Routed to Discussion (both agents mentioned)")
+                return state
+
+            elif plume_mentioned and not mimir_mentioned:
+                # Only Plume mentioned
+                state["agent_used"] = "plume"
+                state["routing_reason"] = "explicit_mention_plume"
+                logger.info("Routed to Plume (explicit mention)")
+                return state
+
+            elif mimir_mentioned and not plume_mentioned:
+                # Only Mimir mentioned
+                state["agent_used"] = "mimir"
+                state["routing_reason"] = "explicit_mention_mimir"
+                logger.info("Routed to Mimir (explicit mention)")
+                return state
+
+            # No explicit mention → check mode
             # Explicit mode selection
             if mode == "plume":
                 state["agent_used"] = "plume"
-                logger.info("Routed to Plume (explicit)")
+                state["routing_reason"] = "forced_mode_plume"
+                logger.info("Routed to Plume (explicit mode)")
                 return state
 
             elif mode == "mimir":
                 state["agent_used"] = "mimir"
-                logger.info("Routed to Mimir (explicit)")
+                state["routing_reason"] = "forced_mode_mimir"
+                logger.info("Routed to Mimir (explicit mode)")
                 return state
 
             elif mode == "discussion":
                 state["agent_used"] = "discussion"
-                logger.info("Routed to Discussion (explicit)")
+                state["routing_reason"] = "forced_mode_discussion"
+                logger.info("Routed to Discussion (explicit mode)")
                 return state
 
-            # Auto-routing logic
+            # Auto-routing logic - Always use discussion mode (agents decide with tools)
             elif mode == "auto":
-                # Analyze input to decide routing with intent classification
-                routing_decision = await self._analyze_input_for_routing(input_text, state)
-
-                state["agent_used"] = routing_decision
-                logger.info("Auto-routed with intent classification", decision=routing_decision)
+                state["agent_used"] = "discussion"
+                state["routing_reason"] = "auto_discussion_with_tools"
+                logger.info("Auto-routed to discussion (agents will decide with tools)")
                 return state
 
             else:
@@ -277,14 +306,44 @@ class PlumeOrchestrator:
             add_error(state, f"Routing failed: {str(e)}")
             return state
 
+    def _is_simple_query(self, query: str) -> bool:
+        """Detect if query is simple (greeting/short question) and doesn't need RAG"""
+        query_lower = query.lower().strip()
+
+        # Salutations communes
+        greetings = [
+            "salut", "coucou", "hello", "hi", "bonjour", "bonsoir",
+            "hey", "yo", "cc", "slt", "bjr"
+        ]
+
+        # Questions très courtes (< 15 caractères) sans mots-clés de recherche
+        if len(query_lower) < 15:
+            # Si c'est juste une salutation
+            if any(greeting in query_lower for greeting in greetings):
+                return True
+            # Si c'est très court ET sans mots de recherche
+            search_keywords = ["recherche", "trouve", "cherche", "montre", "liste", "quoi", "comment", "pourquoi"]
+            if not any(keyword in query_lower for keyword in search_keywords):
+                return True
+
+        return False
+
     async def context_retrieval_node(self, state: AgentState) -> AgentState:
         """Retrieve relevant context for Mimir or discussion"""
-        logger.info("Retrieving context for knowledge-based response")
+        query = state.get("input", "")
 
+        # Skip RAG for simple queries (greetings, very short questions)
+        if self._is_simple_query(query):
+            logger.info("Simple query detected - skipping RAG search", query_length=len(query))
+            state["context"] = []
+            state["search_results"] = []
+            state["search_query"] = query
+            return state
+
+        logger.info("Retrieving context for knowledge-based response")
         add_processing_step(state, "context_retrieval")
 
         try:
-            query = state.get("input", "")
             context_ids = state.get("context_ids", [])
 
             # Perform RAG search
@@ -320,8 +379,20 @@ class PlumeOrchestrator:
 
         add_processing_step(state, "plume_processing")
 
+        # Get SSE queue for streaming
+        sse_queue = self._current_sse_queue
+
         try:
-            from plume import plume_agent
+            # Send processing started event if SSE available
+            if sse_queue:
+                await sse_queue.put({
+                    'type': 'processing',
+                    'node': 'plume',
+                    'status': 'started',
+                    'timestamp': datetime.now().isoformat()
+                })
+
+            from agents.plume import plume_agent
             input_text = state.get("input", "")
 
             start_time = time.time()
@@ -338,6 +409,15 @@ class PlumeOrchestrator:
             add_model_call(state, response.get("model", "claude-3-opus"), response.get("tokens", 0),
                           response.get("cost", 0.0), "plume", duration_ms)
 
+            # Send processing completed event if SSE available
+            if sse_queue:
+                await sse_queue.put({
+                    'type': 'processing',
+                    'node': 'plume',
+                    'status': 'completed',
+                    'timestamp': datetime.now().isoformat()
+                })
+
             agent_logger.log_agent_complete("restitution_task", duration_ms)
             logger.info("Plume processing completed", response_length=len(response["content"]))
 
@@ -346,6 +426,19 @@ class PlumeOrchestrator:
         except Exception as e:
             logger.error("Plume processing failed", error=str(e))
             add_error(state, f"Plume processing failed: {str(e)}")
+
+            # Send error event to SSE if available
+            if sse_queue:
+                try:
+                    await sse_queue.put({
+                        'type': 'error',
+                        'node': 'plume',
+                        'error': str(e),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                except:
+                    pass
+
             return state
 
     async def mimir_node(self, state: AgentState) -> AgentState:
@@ -355,8 +448,20 @@ class PlumeOrchestrator:
 
         add_processing_step(state, "mimir_processing")
 
+        # Get SSE queue for streaming
+        sse_queue = self._current_sse_queue
+
         try:
-            from mimir import mimir_agent
+            # Send processing started event if SSE available
+            if sse_queue:
+                await sse_queue.put({
+                    'type': 'processing',
+                    'node': 'mimir',
+                    'status': 'started',
+                    'timestamp': datetime.now().isoformat()
+                })
+
+            from agents.mimir import mimir_agent
             input_text = state.get("input", "")
             context = state.get("context", [])
 
@@ -374,6 +479,15 @@ class PlumeOrchestrator:
             add_model_call(state, response.get("model", "claude-3-opus"), response.get("tokens", 0),
                           response.get("cost", 0.0), "mimir", duration_ms)
 
+            # Send processing completed event if SSE available
+            if sse_queue:
+                await sse_queue.put({
+                    'type': 'processing',
+                    'node': 'mimir',
+                    'status': 'completed',
+                    'timestamp': datetime.now().isoformat()
+                })
+
             agent_logger.log_agent_complete("knowledge_task", duration_ms)
             logger.info("Mimir processing completed", response_length=len(response["content"]))
 
@@ -382,45 +496,185 @@ class PlumeOrchestrator:
         except Exception as e:
             logger.error("Mimir processing failed", error=str(e))
             add_error(state, f"Mimir processing failed: {str(e)}")
+
+            # Send error event to SSE if available
+            if sse_queue:
+                try:
+                    await sse_queue.put({
+                        'type': 'error',
+                        'node': 'mimir',
+                        'error': str(e),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                except:
+                    pass
+
             return state
 
     async def discussion_node(self, state: AgentState) -> AgentState:
-        """AutoGen discussion between Plume and Mimir"""
+        """
+        AutoGen discussion between Plume and Mimir with SSE streaming support
+        Captures internal messages for real-time visibility
+        """
         agent_logger = get_agent_logger("discussion", state.get("session_id"))
         agent_logger.log_agent_start("multi_agent_discussion")
 
         add_processing_step(state, "autogen_discussion")
 
         try:
-            from autogen_agents import run_discussion
+            from agents.autogen_agents import autogen_discussion
             input_text = state.get("input", "")
             context = state.get("context", [])
+            sse_queue = self._current_sse_queue  # SSE queue for streaming
+
+            # Initialize discussion if needed
+            if not autogen_discussion._initialized:
+                autogen_discussion.initialize()
 
             start_time = time.time()
-            discussion_result = await run_discussion(input_text, context, state)
+
+            # Prepare context summary
+            context_summary = autogen_discussion._prepare_context_summary(context)
+
+            # Format the initial task message
+            task_message = f"""Question utilisateur: {input_text}
+
+Contexte disponible:
+{context_summary}
+
+Travaillez ensemble pour fournir une réponse complète et précise."""
+
+            discussion_history = []
+
+            # Run discussion with message capture for SSE streaming
+            if autogen_discussion._initialized and autogen_discussion.group_chat:
+                # Send processing event to SSE if available
+                if sse_queue:
+                    await sse_queue.put({
+                        'type': 'processing',
+                        'node': 'discussion',
+                        'status': 'started',
+                        'timestamp': datetime.now().isoformat()
+                    })
+
+                # Run the group chat
+                result = await autogen_discussion.group_chat.run(task=task_message)
+
+                # Extract messages from result
+                messages = result.messages if hasattr(result, 'messages') else []
+
+                # Process each message and stream if SSE available
+                for msg in messages:
+                    content = ""
+                    source = ""
+
+                    if hasattr(msg, 'content'):
+                        content = str(msg.content)
+                    elif hasattr(msg, 'text'):
+                        content = str(msg.text)
+                    elif isinstance(msg, dict):
+                        content = msg.get('content', '')
+
+                    if hasattr(msg, 'source'):
+                        source = str(msg.source)
+                    elif hasattr(msg, 'name'):
+                        source = str(msg.name)
+                    elif isinstance(msg, dict):
+                        source = msg.get('source', msg.get('name', ''))
+
+                    # Skip user messages and empty messages
+                    if source in ["User", "user"] or not content.strip():
+                        continue
+
+                    message_data = {
+                        'agent': source.lower(),
+                        'message': content,
+                        'timestamp': datetime.now().isoformat(),
+                        'to': 'mimir' if source.lower() == 'plume' else 'plume'
+                    }
+
+                    # Store in history
+                    discussion_history.append(message_data)
+
+                    # Stream to SSE if queue exists
+                    if sse_queue:
+                        await sse_queue.put({
+                            'type': 'agent_message',
+                            **message_data
+                        })
+
+                # Extract final response
+                final_response = autogen_discussion._extract_final_response_v4(messages)
+
+                # Calculate usage
+                total_tokens = autogen_discussion._estimate_tokens([
+                    {'content': m.get('message', '')} for m in discussion_history
+                ])
+                total_cost = autogen_discussion._calculate_cost(total_tokens)
+
+            else:
+                # Fallback to run_discussion function
+                from agents.autogen_agents import run_discussion
+                discussion_result = await run_discussion(input_text, context, state)
+
+                discussion_history = discussion_result["messages"]
+                final_response = discussion_result["final_response"]
+                total_tokens = discussion_result.get("total_tokens", 0)
+                total_cost = discussion_result.get("total_cost", 0.0)
+
+                # Stream fallback messages if SSE available
+                if sse_queue:
+                    for msg in discussion_history:
+                        await sse_queue.put({
+                            'type': 'agent_message',
+                            **msg
+                        })
+
             duration_ms = (time.time() - start_time) * 1000
 
             # Update state
-            state["discussion_history"] = discussion_result["messages"]
-            state["final_output"] = discussion_result["final_response"]
-            state["final_html"] = discussion_result.get("html")
+            state["discussion_history"] = discussion_history
+            state["final_output"] = final_response
+            state["final_html"] = autogen_discussion._generate_discussion_html_v4(
+                [{'name': m['agent'].title(), 'content': m['message']} for m in discussion_history],
+                final_response
+            )
             state["agents_involved"] = ["plume", "mimir"]
 
             # Record usage
-            total_tokens = discussion_result.get("total_tokens", 0)
-            total_cost = discussion_result.get("total_cost", 0.0)
-            add_model_call(state, "claude-3-opus", total_tokens, total_cost, "discussion", duration_ms)
+            add_model_call(state, settings.MODEL_PLUME, total_tokens, total_cost, "discussion", duration_ms)
+
+            # Send processing complete event to SSE if available
+            if sse_queue:
+                await sse_queue.put({
+                    'type': 'processing',
+                    'node': 'discussion',
+                    'status': 'completed',
+                    'timestamp': datetime.now().isoformat()
+                })
 
             agent_logger.log_agent_complete("multi_agent_discussion", duration_ms)
             logger.info("Discussion completed",
-                       turns=len(discussion_result["messages"]),
-                       final_response_length=len(discussion_result["final_response"]))
+                       turns=len(discussion_history),
+                       final_response_length=len(final_response))
 
             return state
 
         except Exception as e:
             logger.error("Discussion failed", error=str(e))
             add_error(state, f"AutoGen discussion failed: {str(e)}")
+
+            # Send error event to SSE if available
+            if self._current_sse_queue:
+                try:
+                    await self._current_sse_queue.put({
+                        'type': 'error',
+                        'error': str(e),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                except:
+                    pass
+
             return state
 
     async def storage_node(self, state: AgentState) -> AgentState:
@@ -457,8 +711,8 @@ class PlumeOrchestrator:
             # Prepare note data
             note_data = {
                 "title": self._generate_title(state.get("input", "")),
-                "content": state.get("final_output", ""),
-                "html": state.get("final_html"),
+                "text_content": state.get("final_output", ""),
+                "html_content": state.get("final_html"),
                 "metadata": {
                     "agent_used": state.get("agent_used"),
                     "agents_involved": state.get("agents_involved", []),
@@ -483,7 +737,7 @@ class PlumeOrchestrator:
                 logger.info("Note stored successfully", note_id=result["id"])
 
                 # Create embeddings for future retrieval
-                asyncio.create_task(self._create_embeddings_async(result["id"], note_data["content"]))
+                asyncio.create_task(self._create_embeddings_async(result["id"], note_data["text_content"]))
 
                 # Store agent response in conversation if conversation_id exists
                 if conversation_id:
@@ -537,10 +791,27 @@ class PlumeOrchestrator:
             if not state.get("agent_used"):
                 state["agent_used"] = "system"
 
+            # Extract clickable objects from response (Phase 2.2)
+            response = state.get("final_output", "")
+            context_ids = state.get("context_ids", [])
+            clickable_objects = self._extract_clickable_objects(response, context_ids)
+
+            # Enrich metadata with clickable objects
+            if not state.get("metadata"):
+                state["metadata"] = {}
+
+            state["metadata"]["clickable_objects"] = clickable_objects
+            state["metadata"]["processing_time_ms"] = state.get("processing_time_ms", 0)
+            state["metadata"]["tokens_used"] = state.get("tokens_used", 0)
+            state["metadata"]["cost_eur"] = state.get("cost_eur", 0.0)
+            state["metadata"]["agent_used"] = state.get("agent_used", "unknown")
+            state["metadata"]["agents_involved"] = state.get("agents_involved", [])
+
             logger.info("Workflow finalized",
                        processing_time_ms=state.get("processing_time_ms"),
                        tokens_used=state.get("tokens_used", 0),
-                       final_output_length=len(state.get("final_output", "")))
+                       final_output_length=len(state.get("final_output", "")),
+                       clickable_objects_count=len(clickable_objects))
 
             return state
 
@@ -581,6 +852,86 @@ class PlumeOrchestrator:
     # =============================================================================
     # HELPER METHODS
     # =============================================================================
+
+    def _extract_clickable_objects(self, response: str, context_note_ids: List[str] = None) -> List[Dict[str, Any]]:
+        """
+        Extract clickable objects from agent response
+
+        Detects:
+        - [[Note Title]] references
+        - URLs (web links)
+        - Context notes used in RAG
+
+        Args:
+            response: Agent response text
+            context_note_ids: Note IDs used as context
+
+        Returns:
+            List of clickable object dictionaries
+        """
+        import re
+        objects = []
+
+        try:
+            # Pattern 1: Explicit note references [[Note Title]]
+            note_refs = re.findall(r'\[\[([^\]]+)\]\]', response)
+            for title in note_refs:
+                try:
+                    # Find note by title
+                    result = supabase_client.client.table('notes') \
+                        .select('id, title') \
+                        .eq('title', title) \
+                        .eq('user_id', 'king_001') \
+                        .limit(1) \
+                        .execute()
+
+                    if result.data:
+                        objects.append({
+                            'type': 'viz_link',
+                            'note_id': result.data[0]['id'],
+                            'title': result.data[0]['title']
+                        })
+                except Exception as e:
+                    logger.warning(f"Failed to resolve note reference: {title}", error=str(e))
+
+            # Pattern 2: URLs
+            urls = re.findall(r'https?://[^\s<>"{}|\\^`\[\]]+', response)
+            for url in urls:
+                # Clean trailing punctuation
+                url = url.rstrip('.,;:!?)')
+                objects.append({
+                    'type': 'web_link',
+                    'url': url,
+                    'title': url.split('/')[2] if len(url.split('/')) > 2 else url  # Extract domain
+                })
+
+            # Pattern 3: Context notes (if referenced in conversation)
+            if context_note_ids:
+                for note_id in context_note_ids:
+                    try:
+                        result = supabase_client.client.table('notes') \
+                            .select('id, title') \
+                            .eq('id', note_id) \
+                            .single() \
+                            .execute()
+
+                        if result.data:
+                            # Check if not already added
+                            if not any(obj.get('note_id') == note_id for obj in objects):
+                                objects.append({
+                                    'type': 'viz_link',
+                                    'note_id': result.data['id'],
+                                    'title': result.data['title']
+                                })
+                    except Exception as e:
+                        logger.warning(f"Failed to get context note: {note_id}", error=str(e))
+
+            logger.debug(f"Extracted {len(objects)} clickable objects from response")
+
+        except Exception as e:
+            logger.error("Failed to extract clickable objects", error=str(e))
+
+        return objects
 
     async def _analyze_input_for_routing(self, input_text: str, state: AgentState = None) -> str:
         """
@@ -676,7 +1027,8 @@ class PlumeOrchestrator:
         session_id: Optional[str] = None,
         conversation_id: Optional[str] = None,
         user_id: Optional[str] = None,
-        context_ids: Optional[List[str]] = None
+        context_ids: Optional[List[str]] = None,
+        _sse_queue: Optional[asyncio.Queue] = None
     ) -> Dict[str, Any]:
         """
         Main entry point for processing user input with conversation memory
@@ -690,6 +1042,7 @@ class PlumeOrchestrator:
             conversation_id: Conversation ID for memory context
             user_id: User ID for preferences and long-term memory
             context_ids: Specific document IDs to use as context
+            _sse_queue: Optional asyncio.Queue for SSE streaming
 
         Returns:
             Response dictionary with agent output and metadata
@@ -711,6 +1064,9 @@ class PlumeOrchestrator:
             context_ids=context_ids
         )
 
+        # Store SSE queue as instance variable (not in state to avoid msgpack serialization)
+        self._current_sse_queue = _sse_queue
+
         try:
             # Run the workflow
             config = {"configurable": {"thread_id": session_id or "default"}}
@@ -722,13 +1078,15 @@ class PlumeOrchestrator:
                 "html": final_state.get("final_html"),
                 "agent_used": final_state.get("agent_used", "unknown"),
                 "agents_involved": final_state.get("agents_involved", []),
+                "discussion_history": final_state.get("discussion_history", []),
                 "session_id": final_state.get("session_id"),
                 "note_id": final_state.get("note_id"),
                 "processing_time_ms": final_state.get("processing_time_ms", 0),
                 "tokens_used": final_state.get("tokens_used", 0),
                 "cost_eur": final_state.get("cost_eur", 0.0),
                 "errors": final_state.get("errors", []),
-                "warnings": final_state.get("warnings", [])
+                "warnings": final_state.get("warnings", []),
+                "metadata": final_state.get("metadata", {})  # Phase 2.2: include metadata with clickable objects
             }
 
         except Exception as e:
@@ -746,6 +1104,9 @@ class PlumeOrchestrator:
                 "errors": [{"message": str(e), "timestamp": datetime.utcnow()}],
                 "warnings": []
             }
+        finally:
+            # Clean up SSE queue reference
+            self._current_sse_queue = None
 
 # Global orchestrator instance
 orchestrator = PlumeOrchestrator()

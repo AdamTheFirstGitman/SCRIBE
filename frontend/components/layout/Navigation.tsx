@@ -2,16 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MessageSquare, Upload, Search, Settings, Feather, Brain } from 'lucide-react'
+import { MessageSquare, FolderOpen, Archive, Settings, Feather, Brain } from 'lucide-react'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { motion } from 'framer-motion'
 
 const navItems = [
-  { href: '/', icon: Home, label: 'Accueil' },
-  { href: '/chat', icon: MessageSquare, label: 'Chat' },
-  { href: '/upload', icon: Upload, label: 'Upload' },
-  { href: '/search', icon: Search, label: 'Recherche' },
-  { href: '/settings', icon: Settings, label: 'Paramètres' },
+  { href: '/', icon: MessageSquare, label: 'Home' },
+  { href: '/works', icon: FolderOpen, label: 'Works' },
+  { href: '/archives', icon: Archive, label: 'Archives' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export function Navigation() {
@@ -20,20 +19,20 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Top Navbar */}
-      <nav className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-gray-900/80 dark:bg-gray-900/80 light:bg-white/80 backdrop-blur-md border-b border-gray-800 dark:border-gray-800 light:border-gray-200">
+      <nav className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="flex items-center gap-2">
               <Feather className="w-5 h-5 text-plume-500" />
-              <span className="font-semibold text-lg text-gray-50 dark:text-gray-50 light:text-gray-900">
+              <span className="font-semibold text-lg text-gray-900 dark:text-gray-50">
                 Plume
               </span>
             </div>
             <span className="text-gray-500">&</span>
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-mimir-500" />
-              <span className="font-semibold text-lg text-gray-50 dark:text-gray-50 light:text-gray-900">
+              <span className="font-semibold text-lg text-gray-900 dark:text-gray-50">
                 Mimir
               </span>
             </div>
@@ -49,8 +48,8 @@ export function Navigation() {
                   href={href}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-plume-400 dark:text-plume-400 light:text-plume-600 bg-plume-500/10 dark:bg-plume-500/10 light:bg-plume-50'
-                      : 'text-gray-400 dark:text-gray-400 light:text-gray-600 hover:text-gray-200 dark:hover:text-gray-200 light:hover:text-gray-900 hover:bg-gray-800/50 dark:hover:bg-gray-800/50 light:hover:bg-gray-100'
+                      ? 'text-plume-600 dark:text-plume-400 bg-plume-50 dark:bg-plume-500/10'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -67,8 +66,8 @@ export function Navigation() {
               href="/settings"
               className={`p-2 rounded-lg transition-colors ${
                 pathname === '/settings'
-                  ? 'text-plume-400 dark:text-plume-400 light:text-plume-600 bg-plume-500/10 dark:bg-plume-500/10 light:bg-plume-50'
-                  : 'text-gray-400 dark:text-gray-400 light:text-gray-600 hover:text-gray-200 dark:hover:text-gray-200 light:hover:text-gray-900 hover:bg-gray-800/50 dark:hover:bg-gray-800/50 light:hover:bg-gray-100'
+                  ? 'text-plume-600 dark:text-plume-400 bg-plume-50 dark:bg-plume-500/10'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
               }`}
               aria-label="Paramètres"
             >
@@ -79,7 +78,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Navigation - Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 dark:bg-gray-900/95 light:bg-white/95 backdrop-blur-md border-t border-gray-800 dark:border-gray-800 light:border-gray-200 safe-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 safe-bottom">
         <div className="flex items-center justify-around px-2 py-2">
           {navItems.map(({ href, icon: Icon, label }) => {
             const isActive = pathname === href
@@ -93,22 +92,22 @@ export function Navigation() {
                 {isActive && (
                   <motion.div
                     layoutId="mobile-active-indicator"
-                    className="absolute inset-0 bg-plume-500/10 dark:bg-plume-500/10 light:bg-plume-50 rounded-xl"
+                    className="absolute inset-0 bg-plume-50 dark:bg-plume-500/10 rounded-xl"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
                 )}
                 <Icon
                   className={`relative w-6 h-6 mb-1 transition-colors ${
                     isActive
-                      ? 'text-plume-400 dark:text-plume-400 light:text-plume-600'
-                      : 'text-gray-400 dark:text-gray-400 light:text-gray-600'
+                      ? 'text-plume-600 dark:text-plume-400'
+                      : 'text-gray-600 dark:text-gray-400'
                   }`}
                 />
                 <span
                   className={`relative text-xs font-medium transition-colors ${
                     isActive
-                      ? 'text-plume-400 dark:text-plume-400 light:text-plume-600'
-                      : 'text-gray-400 dark:text-gray-400 light:text-gray-600'
+                      ? 'text-plume-600 dark:text-plume-400'
+                      : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
                   {label}

@@ -3,17 +3,17 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../../lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plume-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50 disabled:pointer-events-none",
+  "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plume-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950 disabled:opacity-50 disabled:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "bg-plume-500 text-white hover:bg-plume-600 active:bg-plume-700 shadow-sm hover:shadow-md",
-        secondary: "bg-gray-800 text-gray-200 hover:bg-gray-700 border border-gray-600 hover:border-gray-500",
-        outline: "border border-gray-700 bg-transparent text-gray-300 hover:bg-gray-800 hover:text-gray-100",
-        ghost: "text-gray-300 hover:bg-gray-800/50 hover:text-gray-100",
+        default: "bg-plume-600 dark:bg-plume-500 text-white hover:bg-plume-700 dark:hover:bg-plume-600 active:bg-plume-800 dark:active:bg-plume-700 shadow-sm hover:shadow-md",
+        secondary: "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500",
+        outline: "border border-gray-300 dark:border-gray-700 bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
+        ghost: "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100",
         destructive: "bg-red-600 text-white hover:bg-red-700 active:bg-red-800",
-        mimir: "bg-mimir-500 text-white hover:bg-mimir-600 active:bg-mimir-700 shadow-sm hover:shadow-md",
-        link: "text-plume-400 underline-offset-4 hover:underline hover:text-plume-300"
+        mimir: "bg-mimir-600 dark:bg-mimir-500 text-white hover:bg-mimir-700 dark:hover:bg-mimir-600 active:bg-mimir-800 dark:active:bg-mimir-700 shadow-sm hover:shadow-md",
+        link: "text-plume-600 dark:text-plume-400 underline-offset-4 hover:underline hover:text-plume-700 dark:hover:text-plume-300"
       },
       size: {
         sm: "h-8 px-3 text-sm rounded-md",

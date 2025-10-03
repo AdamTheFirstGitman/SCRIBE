@@ -148,7 +148,8 @@ class EmbeddingService:
             # Call OpenAI API
             response = await self.client.embeddings.create(
                 input=[cleaned_text],
-                model=self.model
+                model=self.model,
+                dimensions=self.dimensions  # Explicitly set dimensions
             )
 
             embedding_vector = response.data[0].embedding

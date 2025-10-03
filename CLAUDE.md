@@ -123,11 +123,13 @@ services:
   - [ ] Accessibility A11Y complet
   - [ ] Onboarding interactif
 
-- [ ] Architecture Agentique Avancée
-  - [ ] LangGraph orchestrator complet
-  - [ ] AutoGen v0.4 multi-agent discussions
-  - [ ] Memory partagée agents
-  - [ ] Routing automatique intelligent
+- [x] Architecture Agentique Avancée ✅ COMPLÉTÉE
+  - [x] LangGraph orchestrator complet (Phase 2.2)
+  - [x] AutoGen v0.4 multi-agent discussions (Phase 2.2)
+  - [x] Architecture agent-centric avec tools (Phase 2.3)
+  - [x] Tools complets (5 tools: search_knowledge, web_search, get_related_content, create_note, update_note)
+  - [x] Memory partagée agents (Phase 2.2)
+  - [x] Routing automatique intelligent (Phase 2.2)
 
 - [ ] Features Avancées
   - [ ] Streaming Chat (Vercel AI SDK)
@@ -144,12 +146,37 @@ services:
 
 ## 🏗️ STRUCTURE AGENTS SCRIBE
 
-### Agents Production
+### Agents Production (Architecture Agent-Centric avec Tools)
+
+**Phase 2.3 ✅ COMPLÉTÉE :** Architecture agent-centric - Les agents décident eux-mêmes quand utiliser leurs tools
+
 ```
 AGENTS/
 ├── Plume/          # Agent restitution (capture, transcription, reformulation)
+│   └── Tools: [create_note, update_note] ✅ COMPLET
+│
 └── Mimir/          # Agent archiviste (RAG, recherche, web search)
+    └── Tools: [search_knowledge, web_search, get_related_content] ✅ COMPLET
 ```
+
+**Tools Implémentés (5/5) :**
+
+**MIMIR Tools :**
+- `search_knowledge` - Recherche RAG dans archives locales
+- `web_search` - Recherche internet (Perplexity + Tavily) ✨
+- `get_related_content` - Contenus similaires à une note ✨
+
+**PLUME Tools :**
+- `create_note` - Stocker restitutions dans archives ✨
+- `update_note` - Mettre à jour notes existantes ✨
+
+**Tests Validés :**
+- ✅ Tests unitaires : 7/7 passés
+- ✅ Tests intégration : 7/7 passés
+- ✅ SSE streaming validé
+- ✅ Discussion collaborative validée
+
+**Documentation :** `CHAP2/CR_PHASE2.3_COMPLETE.md`
 
 ### Agents Build/Maintenance
 ```
@@ -268,6 +295,44 @@ cd database && python test_connection.py
 - Jamais signer commits au nom de Claude, toujours utilisateur
 - Clear build cache Render pour changements majeurs (Python version, deps)
 - Imports absolus backend, imports relatifs frontend
+
+### Best Practices Consolidées (Phase 2.3)
+
+**Architecture Agent-Centric :**
+- ✅ Orchestrator **coordonne**, agents **décident**
+- ✅ Tools = capacités agents (pas micro-management orchestrator)
+- ✅ Docstrings détaillées = instructions pour agents
+- ✅ Return `Dict[str, Any]` avec `success: bool` + `error: str`
+
+**Development Workflow :**
+1. Design → Docstrings détaillées AVANT code
+2. Implement → Fonctions simples, error handling multi-couches
+3. Test unitaire → Structure et contrats
+4. Test intégration → Workflow complet (révèle bugs réels)
+5. Documentation → CR détaillé avec enseignements
+6. Deploy → Checklist + validation post-deploy
+
+**Code Quality :**
+- ✅ Imports absolus backend (évite ambiguïtés)
+- ✅ Services avec état = initialization au startup
+- ✅ Error handling à chaque couche (tools, agents, orchestrator)
+- ✅ Logging structuré granulaire (traçabilité)
+- ✅ Simplicité (fonctions) > complexité (classes) pour tools
+
+**Testing Strategy :**
+- ✅ Tests unitaires = structure, callable, contracts
+- ✅ Tests intégration = workflow complet, side effects, problèmes réels
+- ✅ Tests AVANT commit (pas après échec deploy)
+- ✅ Prioriser tests intégration pour confiance déploiement
+
+**Deployment Strategy :**
+- ✅ Code changes ≠ DB migrations (séparés)
+- ✅ Migrations DB cloud = post-deployment via Render Shell
+- ✅ Health checks avant validation
+- ✅ Monitoring logs 24h post-deploy
+
+**Documentation Enseignements :**
+→ **`CHAP2/ENSEIGNEMENTS_PHASE2.3.md`** - 10 apprentissages majeurs + patterns + templates
 
 ---
 

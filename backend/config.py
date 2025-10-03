@@ -97,17 +97,17 @@ class Settings(BaseSettings):
     # LLM CONFIGURATION
     # =============================================================================
     # Plume (restitution agent) settings
-    MAX_TOKENS_PLUME: int = Field(default=4000, env="MAX_TOKENS_PLUME")
+    MAX_TOKENS_PLUME: int = Field(default=1000, env="MAX_TOKENS_PLUME")
     TEMPERATURE_PLUME: float = Field(default=0.3, env="TEMPERATURE_PLUME")
-    MODEL_PLUME: str = Field(default="claude-3-opus-20240229", env="MODEL_PLUME")
+    MODEL_PLUME: str = Field(default="claude-sonnet-4-5-20250929", env="MODEL_PLUME")
 
     # Mimir (archive agent) settings
-    MAX_TOKENS_MIMIR: int = Field(default=4000, env="MAX_TOKENS_MIMIR")
+    MAX_TOKENS_MIMIR: int = Field(default=2000, env="MAX_TOKENS_MIMIR")
     TEMPERATURE_MIMIR: float = Field(default=0.2, env="TEMPERATURE_MIMIR")
-    MODEL_MIMIR: str = Field(default="claude-3-opus-20240229", env="MODEL_MIMIR")
+    MODEL_MIMIR: str = Field(default="claude-sonnet-4-5-20250929", env="MODEL_MIMIR")
 
     # General LLM settings
-    DEFAULT_MODEL: str = Field(default="claude-3-opus-20240229", env="DEFAULT_MODEL")
+    DEFAULT_MODEL: str = Field(default="claude-sonnet-4-5-20250929", env="DEFAULT_MODEL")
     EMBEDDING_MODEL: str = Field(default="text-embedding-3-large", env="EMBEDDING_MODEL")
     EMBEDDING_DIMENSIONS: int = Field(default=1536, env="EMBEDDING_DIMENSIONS")
 
@@ -301,9 +301,15 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables not defined in Settings
 
 # Global settings instance
 settings = Settings()
+
+# Dependency injection function for FastAPI
+def get_settings() -> Settings:
+    """Get settings instance for dependency injection"""
+    return settings
 
 # Export commonly used configs
 PLUME_CONFIG = settings.plume_config

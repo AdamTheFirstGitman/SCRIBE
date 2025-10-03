@@ -409,6 +409,276 @@ MEMORY_SIMILARITY_THRESHOLD=0.75
 
 ---
 
+## 🔧 Debug & Déploiement Production
+
+### Problèmes Rencontrés (30 sept 2025)
+
+#### 1. **PostgresSaver Context Manager Issue**
+
+**Erreur initiale :**
+```python
+AttributeError: '_GeneratorContextManager' object has no attribute 'setup'
+```
+
+**Cause :**
+```python
+# ❌ Code problématique
+checkpointer = await PostgresSaver.from_conn_string(db_url)
+await checkpointer.setup()  # Impossible - retourne context manager
+```
+
+**Solution temporaire :**
+```python
+# ✅ Fallback MemorySaver
+from langgraph.checkpoint.memory import MemorySaver
+checkpointer = MemorySaver()
+logger.warning("Using in-memory checkpointing (PostgreSQL disabled temporarily)")
+```
+
+**Impact :**
+- Checkpointing non-persistant (RAM seulement)
+- Conversations perdues au redéploiement
+- À corriger : implémenter async context manager proprement
+
+---
+
+#### 2. **Supabase API Deprecation**
+
+**Erreur :**
+```python
+ClientOptions.__init__() got an unexpected keyword argument 'storage_key'
+```
+
+**Fix appliqué :**
+```python
+# AVANT
+options = ClientOptions(storage_key="plume_mimir_session")
+
+# APRÈS
+options = ClientOptions(auto_refresh_token=True, persist_session=True)
+```
+
+**Fichier modifié :** `backend/services/storage.py:33`
+
+---
+
+#### 3. **Pydantic V2 Migration**
+
+**Warning :**
+```
+'schema_extra' has been renamed to 'json_schema_extra'
+```
+
+**Fix appliqué :**
+```python
+# 7 occurrences dans backend/models/schemas.py
+class Config:
+    json_schema_extra = {"example": {...}}  # Avant: schema_extra
+```
+
+---
+
+#### 4. **Render Environment Variables - Problème Critique**
+
+**Erreur déploiement :**
+```
+ValidationError: 1 validation error for Settings
+SUPABASE_URL
+  Field required [type=missing]
+```
+
+**Cause identifiée :**
+- `render.yaml` contenait placeholders (`YOUR_SUPABASE_URL_HERE`)
+- `.env` local correct MAIS gitignored → pas disponible sur Render
+- Render lisait `render.yaml` avec placeholders au lieu des vraies valeurs
+
+**Solution hybride (Option C) :**
+
+**A) Variables publiques hardcodées dans render.yaml :**
+```yaml
+# Safe to commit (publiques par design)
+- key: SUPABASE_URL
+  value: https://eytfiohvhlqokikemlfn.supabase.co
+- key: SUPABASE_ANON_KEY
+  value: eyJhbGc...
+- key: DATABASE_URL
+  value: postgresql://...
+```
+
+**B) Secrets via Dashboard + Script de sync :**
+
+Création `scripts/sync_env_to_render.py` :
+- Lit `.env` local
+- Compare avec Render Dashboard via API
+- Sync uniquement les changements
+- Dry-run mode pour preview
+
+**Variables syncées automatiquement :**
+```python
+SECRET_KEYS = {
+    'CLAUDE_API_KEY',
+    'OPENAI_API_KEY',
+    'PERPLEXITY_API_KEY',
+    'TAVILY_API_KEY',
+    'SUPABASE_SERVICE_KEY',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'SECRET_KEY',
+}
+```
+
+**Usage :**
+```bash
+# Preview
+python scripts/sync_env_to_render.py --dry-run
+
+# Apply
+python scripts/sync_env_to_render.py --apply
+```
+
+---
+
+#### 5. **Script Sync - Bugs initiaux**
+
+**Bug #1 : API Response Parsing**
+```python
+# ❌ Erreur: KeyError 'key'
+current_dict = {var['key']: var for var in current_env_vars}
+
+# Render API retourne: [{"envVar": {"key": "...", "value": "..."}}, ...]
+```
+
+**Fix :**
+```python
+raw_data = response.json()
+return [item['envVar'] for item in raw_data]
+```
+
+**Bug #2 : Variables Supabase manquantes**
+- Premier sync n'incluait pas `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DATABASE_URL`
+- Ajoutées au set `SECRET_KEYS`
+- Re-sync réussi
+
+---
+
+### Déploiement Final - ✅ SUCCÈS
+
+**URL Backend :** https://scribe-api-uj22.onrender.com
+
+**Logs confirmés :**
+```
+✓ Starting Plume & Mimir backend
+✓ Supabase client initialized successfully
+✓ Database connection established
+⚠ Redis cache unavailable (fallback L1 cache) - ATTENDU
+⚠ Using in-memory checkpointing - ATTENDU
+✓ Orchestrator initialized successfully
+✓ Backend startup completed successfully
+✓ Uvicorn running on http://0.0.0.0:10000
+✓ Health checks: 200 OK
+```
+
+**Warnings non-bloquants :**
+1. `Table 'public.notes' not found` - Test connexion, pas critique
+2. `Redis connection refused` - Redis pas configuré, cache mémoire fallback OK
+3. `In-memory checkpointing` - PostgresSaver désactivé temporairement
+
+---
+
+### Fichiers Créés (Déploiement)
+
+**Nouveaux :**
+- ✅ `scripts/sync_env_to_render.py` (320 lignes)
+- ✅ `scripts/README_SYNC.md` (316 lignes - documentation complète)
+
+**Modifiés :**
+- ✅ `render.yaml` (hardcoded public configs)
+- ✅ `.env.example` (ajout RENDER_API_KEY placeholder)
+- ✅ `backend/services/storage.py` (suppression storage_key)
+- ✅ `backend/models/schemas.py` (schema_extra → json_schema_extra)
+- ✅ `backend/agents/orchestrator.py` (PostgresSaver → MemorySaver temporaire)
+
+---
+
+### Commits Déploiement
+
+**Commit 127dcf2 :**
+```
+FIX: Temp disable PostgresSaver - use MemorySaver fallback
+```
+
+**Commit 78c1e24 :**
+```
+FIX: Supabase ClientOptions + Pydantic V2 warnings
+```
+
+**Commit 5a13f04 :**
+```
+FEAT: Render env sync script + hybrid config strategy
+```
+
+**Commit d4804a5 :**
+```
+FIX: Render sync script - API parsing + Supabase vars
+```
+
+---
+
+### Questions Utilisateur & Réponses
+
+**Q1 : Pourquoi migration 002 pas automatisée ?**
+- Sécurité production
+- Changements schéma DB = validation humaine requise
+- Permet backup avant application
+- Best practice : migrations manuelles en prod
+
+**Q2 : Cache distribué (Redis) - Pourquoi ?**
+
+**Cache local (actuel) :**
+- RAM serveur Render
+- Perdu à chaque redéploiement
+- Non partagé entre workers
+
+**Cache distribué (Redis) :**
+- Serveur externe persistant
+- Shared entre instances
+- Survit aux redéploiements
+- Rentable si >1000 req/jour ou multi-workers
+
+**Q3 : PostgresSaver désactivé - Pourquoi et intérêt ?**
+
+**Désactivé car :**
+- `from_conn_string()` retourne async context manager
+- Impossible d'utiliser directement dans app lifecycle
+- Nécessite refactor architecture async
+
+**Intérêt PostgresSaver :**
+- Workflows longs persistants
+- Resume après crash
+- Debugging états précis
+- Multi-workers partagent checkpoints
+
+**Pas urgent :** MemorySaver suffit pour conversations courtes actuelles
+
+---
+
+### Décisions Architecturales
+
+**✅ Adoptées :**
+1. **Hybrid env config** (public in yaml, secrets via API)
+2. **MemorySaver temporaire** (pragmatisme vs perfection)
+3. **Manual migrations** (sécurité production)
+4. **Redis optionnel** (pas critique actuellement)
+
+**📋 À revisiter :**
+1. PostgresSaver proprement implémenté
+2. Redis activation si scaling
+3. Migration 002 exécution quand RAG long-term requis
+
+---
+
 ## 🎯 Conclusion
 
 ### Status Final

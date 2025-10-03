@@ -18,7 +18,7 @@ from cryptography.fernet import Fernet
 import boto3
 from botocore.exceptions import ClientError
 
-from database.supabase_client import get_supabase_client
+from services.storage import supabase_client
 from config import get_settings
 
 @dataclass
@@ -48,7 +48,7 @@ class BackupService:
 
     def __init__(self):
         self.settings = get_settings()
-        self.supabase = get_supabase_client()
+        self.supabase = supabase_client
 
         # Backup configuration
         self.backup_dir = Path("backups")

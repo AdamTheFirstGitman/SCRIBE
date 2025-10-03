@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from database.supabase_client import get_supabase_client
+from services.storage import supabase_client
 from config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class RealtimeService:
 
     def __init__(self):
         self.settings = get_settings()
-        self.supabase = get_supabase_client()
+        self.supabase = supabase_client
         self.subscriptions: Dict[str, Any] = {}
         self.event_handlers: Dict[EventType, List[Callable]] = {}
         self.active_users: Dict[str, Dict[str, Any]] = {}

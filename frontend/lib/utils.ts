@@ -138,3 +138,24 @@ export function isInViewport(element: Element): boolean {
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   )
 }
+
+/**
+ * Format date relative to today (Aujourd'hui, Hier, 3 jours, or date)
+ */
+export function formatRelativeDate(date: Date): string {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  const diffInDays = Math.floor((today.getTime() - compareDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffInDays === 0) return 'Aujourd\'hui'
+  if (diffInDays === 1) return 'Hier'
+  if (diffInDays < 7) return `${diffInDays} jours`
+
+  return date.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  })
+}

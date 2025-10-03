@@ -13,8 +13,8 @@ import numpy as np
 import httpx
 from collections import defaultdict
 
-from embedding_service import EmbeddingService
-from database.supabase_client import get_supabase_client
+from services.embeddings import embedding_service
+from services.storage import supabase_client
 from config import get_settings
 
 @dataclass
@@ -53,8 +53,8 @@ class AdvancedRAGService:
 
     def __init__(self):
         self.settings = get_settings()
-        self.embedding_service = EmbeddingService()
-        self.supabase = get_supabase_client()
+        self.embedding_service = embedding_service
+        self.supabase = supabase_client
 
         # Performance tracking
         self.query_stats = defaultdict(list)
@@ -86,7 +86,7 @@ class AdvancedRAGService:
         start_time = time.time()
 
         # Step 1: Generate query embedding
-        query_embedding = await self.embedding_service.generate_embedding(query)
+        query_embedding = await self.embedding_service.get_embedding(query)
 
         # Step 2: Parallel search across all sources
         search_tasks = [
@@ -350,7 +350,7 @@ class AdvancedRAGService:
             # For now, implement basic document connections
             # TODO: Implement proper knowledge graph with entities and relationships
 
-            query_embedding = await self.embedding_service.generate_embedding(query)
+            query_embedding = await self.embedding_service.get_embedding(query)
 
             # Find documents with similar topics/entities
             result = self.supabase.from_('notes') \

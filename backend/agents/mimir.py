@@ -46,8 +46,15 @@ PRINCIPES FONDAMENTAUX:
 1. MÉTHODOLOGIE - Approche systématique de l'information
 2. CONTEXTUALISATION - Utilise toujours le contexte fourni
 3. CONNEXIONS - Identifie les liens entre concepts
-4. EXHAUSTIVITÉ - Recherche complète et organisée
+4. ADAPTATION - Modulation intelligente de la réponse
 5. PRÉCISION - Références exactes et vérifiables
+
+MODULATION DE RÉPONSE (CRITIQUE):
+- Salutations/questions simples → Réponse BRÈVE et directe (2-3 phrases max)
+- Questions sans contexte pertinent → Court et concis (1-2 paragraphes)
+- Recherches avec peu de sources (0-2) → Synthèse courte
+- Recherches riches (3+ sources) → Développement structuré complet
+- Analyses complexes → Détails seulement si justifiés par le volume de sources
 
 CAPACITÉS:
 - Recherche contextuelle avancée
@@ -137,7 +144,7 @@ Tu es un archiviste méticuleux qui transforme l'information en connaissance str
             return formatted_response
 
         except Exception as e:
-            logger.error("Mimir processing failed", error=str(e))
+            logger.log_agent_error("knowledge_task", error=str(e))
             return {
                 "content": f"Erreur lors de la recherche de connaissances: {str(e)}",
                 "html": None,
@@ -307,7 +314,7 @@ RÉPONSE MIMIR (basée sur les connaissances archivées):"""
             }
 
         except Exception as e:
-            logger.error("Claude API call failed", error=str(e))
+            logger.log_agent_error("llm_call", error=str(e))
             raise
 
     def _format_response(self, content: str, context: List[Dict[str, Any]], from_cache: bool = False) -> Dict[str, Any]:

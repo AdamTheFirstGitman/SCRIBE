@@ -12,7 +12,7 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
 import json
 
-from database.supabase_client import get_supabase_client
+from services.storage import supabase_client
 from config import get_settings
 
 @dataclass
@@ -72,7 +72,7 @@ class MonitoringService:
 
     def __init__(self):
         self.settings = get_settings()
-        self.supabase = get_supabase_client()
+        self.supabase = supabase_client
 
         # Metrics storage (in-memory for real-time, DB for persistence)
         self.system_metrics_history = deque(maxlen=1440)  # 24 hours at 1min intervals

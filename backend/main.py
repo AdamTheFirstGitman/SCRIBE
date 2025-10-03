@@ -18,7 +18,8 @@ from typing import Dict, Any
 
 from config import settings
 from utils.logger import setup_logging, get_logger
-from api import chat, archive, search, health
+from api import chat, archive, search, health, auth, conversations, notes, metrics
+from api import upload  # Already exists but now has new endpoints
 from services.cache import cache_manager
 from services.storage import supabase_client
 from agents.orchestrator import PlumeOrchestrator
@@ -41,6 +42,10 @@ async def lifespan(app: FastAPI):
 
     # Initialize services
     try:
+        # Initialize Supabase client
+        await supabase_client.initialize()
+        logger.info("Supabase client initialized")
+
         # Test database connection
         await supabase_client.test_connection()
         logger.info("Database connection established")
@@ -235,6 +240,13 @@ app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 app.include_router(archive.router, prefix="/api/v1", tags=["Archive"])
 app.include_router(search.router, prefix="/api/v1", tags=["Search"])
+
+# Phase 2.2 routers
+app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
+app.include_router(conversations.router, prefix="/api/v1", tags=["Conversations"])
+app.include_router(notes.router, prefix="/api/v1", tags=["Notes"])
+app.include_router(upload.router, prefix="/api/v1", tags=["Upload"])
+app.include_router(metrics.router, prefix="/api/v1", tags=["Metrics"])
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,20 +1,30 @@
 """
 File Upload API Endpoints
 Handles document upload and processing for SCRIBE system
+Includes text and audio upload for note creation
 """
 
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Form
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Form, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from typing import Optional, List
 import uuid
 from pathlib import Path
 import asyncio
 from datetime import datetime
+import tempfile
+import os
 
 from services.document_processor import DocumentProcessor
 from services.embedding_service import EmbeddingService
-from database.supabase_client import get_supabase_client
+from services.storage import supabase_client
 from models.document import DocumentResponse, DocumentCreate, ProcessingStatus
+from services.storage import supabase_client
+from services.transcription import TranscriptionService
+from agents.orchestrator import PlumeOrchestrator
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -36,7 +46,7 @@ async def upload_document(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),  # Comma-separated
-    supabase = Depends(get_supabase_client)
+    # Removed dependency - use global supabase_client
 ):
     """
     Upload and process a text document
@@ -107,7 +117,7 @@ async def upload_document(
 @router.get("/document/{document_id}", response_model=DocumentResponse)
 async def get_document(
     document_id: str,
-    supabase = Depends(get_supabase_client)
+    # Removed dependency - use global supabase_client
 ):
     """Retrieve a processed document by ID"""
 
@@ -146,7 +156,7 @@ async def list_documents(
     limit: int = 50,
     offset: int = 0,
     tag: Optional[str] = None,
-    supabase = Depends(get_supabase_client)
+    # Removed dependency - use global supabase_client
 ):
     """List all uploaded documents with optional filtering"""
 
@@ -190,7 +200,7 @@ async def list_documents(
 @router.delete("/document/{document_id}")
 async def delete_document(
     document_id: str,
-    supabase = Depends(get_supabase_client)
+    # Removed dependency - use global supabase_client
 ):
     """Soft delete a document"""
 
@@ -274,7 +284,7 @@ async def _generate_embeddings_async(document_id: str, chunks: List[dict]):
     """Generate embeddings for document chunks asynchronously"""
 
     try:
-        supabase = get_supabase_client()
+        supabase = supabase_client
 
         # Update status to processing
         supabase.table("documents").update({
@@ -318,6 +328,248 @@ async def _generate_embeddings_async(document_id: str, chunks: List[dict]):
         }).eq("id", document_id).execute()
 
         print(f"Embedding generation failed for document {document_id}: {e}")
+
+# =============================================================================
+# PHASE 2.2: TEXT AND AUDIO UPLOAD ENDPOINTS
+# =============================================================================
+
+# Models for Phase 2.2
+class UploadTextRequest(BaseModel):
+    text: str
+    context: Optional[str] = None
+
+
+class UploadResponse(BaseModel):
+    note_id: str
+    title: str
+    created_at: datetime
+
+
+class UploadAudioResponse(BaseModel):
+    note_id: str
+    title: str
+    transcription: str
+    created_at: datetime
+    agent_response: str
+
+
+@router.post("/text", response_model=UploadResponse, status_code=201)
+async def upload_text(request: UploadTextRequest):
+    """Create note from text"""
+
+    try:
+        logger.info("Creating note from text", text_length=len(request.text))
+
+        # Generate title from first line or first 50 chars
+        title = request.text.split('\n')[0][:50]
+        if len(title) == 50:
+            title += '...'
+        if not title.strip():
+            title = "Nouvelle note"
+
+        # Create note
+        note_data = {
+            'title': title,
+            'text_content': request.text,
+            'html_content': '',  # Will be converted on-demand
+            'user_id': 'king_001',
+            'metadata': {
+                'context': request.context or '',
+                'source': 'manual_upload'
+            }
+        }
+
+        result = supabase_client.client.table('notes').insert(note_data).execute()
+        note = result.data[0]
+
+        # Index for RAG search (background)
+        try:
+            from services.embeddings import embed_and_store
+            asyncio.create_task(embed_and_store(note['id'], request.text))
+        except ImportError:
+            logger.warning("Embeddings service not available for indexing")
+
+        logger.info("Note created successfully", note_id=note['id'], title=note['title'])
+
+        return UploadResponse(
+            note_id=note['id'],
+            title=note['title'],
+            created_at=note['created_at']
+        )
+
+    except Exception as e:
+        logger.error("Failed to create note from text", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create note: {str(e)}"
+        )
+
+
+@router.post("/audio", response_model=UploadAudioResponse, status_code=201)
+async def upload_audio(
+    fastapi_request: Request,
+    audio_file: UploadFile = File(..., description="Audio file principal"),
+    context_text: Optional[str] = Form(None),
+    context_audio: Optional[UploadFile] = File(None)
+):
+    """Upload audio, transcribe, and let agents create structured note"""
+
+    # Validate main audio file type
+    allowed_types = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/webm', 'audio/ogg', 'audio/x-m4a']
+    if audio_file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Type de fichier non supporté. Formats acceptés : mp3, wav, m4a, webm, ogg"
+        )
+
+    transcription_service = TranscriptionService()
+    temp_files = []
+
+    try:
+        logger.info("Processing audio upload", filename=audio_file.filename)
+
+        # 1. Transcribe main audio
+        temp_audio = tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=os.path.splitext(audio_file.filename)[1]
+        )
+        temp_files.append(temp_audio.name)
+
+        content = await audio_file.read()
+        temp_audio.write(content)
+        temp_audio.close()
+
+        # Call transcription service (it expects file path)
+        # We need to adapt since the service expects base64 encoded data
+        # Let's create a wrapper method or read as base64
+        import base64
+        with open(temp_audio.name, 'rb') as f:
+            audio_bytes = f.read()
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+
+        # Get file extension for format
+        file_ext = os.path.splitext(audio_file.filename)[1].lstrip('.')
+
+        main_transcription_result = await transcription_service.transcribe_audio(
+            audio_data=audio_base64,
+            format=file_ext or 'mp3',
+            language='fr'
+        )
+        main_transcription = main_transcription_result['text']
+
+        logger.info("Main audio transcribed", length=len(main_transcription))
+
+        # 2. Build context (text or audio transcription)
+        context_content = ""
+
+        if context_audio:
+            # Transcribe context audio
+            temp_context = tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=os.path.splitext(context_audio.filename)[1]
+            )
+            temp_files.append(temp_context.name)
+
+            context_audio_content = await context_audio.read()
+            temp_context.write(context_audio_content)
+            temp_context.close()
+
+            # Convert to base64
+            with open(temp_context.name, 'rb') as f:
+                context_audio_bytes = f.read()
+            context_audio_base64 = base64.b64encode(context_audio_bytes).decode('utf-8')
+
+            context_ext = os.path.splitext(context_audio.filename)[1].lstrip('.')
+
+            context_transcription_result = await transcription_service.transcribe_audio(
+                audio_data=context_audio_base64,
+                format=context_ext or 'mp3',
+                language='fr'
+            )
+            context_content = context_transcription_result['text']
+
+            logger.info("Context audio transcribed", length=len(context_content))
+
+        elif context_text:
+            context_content = context_text
+
+        # 3. Send to agents via orchestrator
+        orchestrator: PlumeOrchestrator = fastapi_request.app.state.orchestrator
+
+        # Build prompt for agents
+        agent_prompt = f"""Crée une note structurée et bien organisée basée sur cette transcription audio :
+
+{main_transcription}"""
+
+        if context_content:
+            agent_prompt += f"""
+
+Informations contextuelles supplémentaires :
+{context_content}"""
+
+        agent_prompt += """
+
+Instructions :
+- Crée un titre pertinent et descriptif
+- Structure le contenu de manière claire (sections, points si nécessaire)
+- Corrige les erreurs de transcription éventuelles
+- Améliore la lisibilité tout en préservant le sens
+"""
+
+        # Process with orchestrator
+        result = await orchestrator.process(
+            input_text=agent_prompt,
+            mode="plume",  # Force Plume pour création note
+            user_id="king_001",
+            session_id=str(uuid.uuid4())
+        )
+
+        # 4. Extract note_id from result
+        note_id = result.get("note_id")
+
+        if not note_id:
+            # Fallback: create note manually if agents didn't
+            logger.warning("Agents did not create note, creating manually")
+            supabase = supabase_client
+            note_data = {
+                'title': f"Note audio - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+                'text_content': main_transcription,
+                'html_content': '',
+                'user_id': 'king_001',
+                'metadata': {
+                    'source': 'audio_upload',
+                    'original_filename': audio_file.filename,
+                    'context': context_content or ''
+                }
+            }
+            note_result = supabase.client.table('notes').insert(note_data).execute()
+            note_id = note_result.data[0]['id']
+
+        logger.info("Audio upload processed successfully", note_id=note_id)
+
+        return UploadAudioResponse(
+            note_id=note_id,
+            title=result.get("title", "Note créée"),
+            transcription=main_transcription,
+            created_at=datetime.now(),
+            agent_response=result["response"]
+        )
+
+    except Exception as e:
+        logger.error("Audio upload failed", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors du traitement audio : {str(e)}"
+        )
+
+    finally:
+        # Clean up temp files
+        for temp_path in temp_files:
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+
 
 # Health check endpoint
 @router.get("/health")

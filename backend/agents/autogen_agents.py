@@ -13,17 +13,19 @@ try:
     from autogen_agentchat.agents import AssistantAgent
     from autogen_agentchat.teams import RoundRobinGroupChat
     from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
-    from autogen_ext.models.openai import OpenAIChatCompletionClient
+    from autogen_ext.models.anthropic import AnthropicChatCompletionClient
     AUTOGEN_V4_AVAILABLE = True
 except ImportError:
     # Fallback if autogen v0.4 is not available
     AUTOGEN_V4_AVAILABLE = False
 
 from agents.state import AgentState
+from agents.tools import MIMIR_TOOLS, PLUME_TOOLS
 from config import settings
-from utils.logger import get_agent_logger, cost_logger
+from utils.logger import get_agent_logger, cost_logger, get_logger
 
-logger = get_agent_logger("autogen")
+agent_logger = get_agent_logger("autogen")
+logger = get_logger(__name__)  # Structlog logger for errors/warnings
 
 class AutoGenDiscussion:
     """
@@ -45,20 +47,19 @@ class AutoGenDiscussion:
             return
 
         try:
-            # Configure model client for AutoGen v0.4
-            # Since we use Claude, we'll need to use OpenAI-compatible endpoint or create custom client
-            # For now, using OpenAI client with Claude settings (may need adjustment)
-            self.model_client = OpenAIChatCompletionClient(
-                model="gpt-4o",  # Will need to configure for Claude later
-                api_key=settings.OPENAI_API_KEY if hasattr(settings, 'OPENAI_API_KEY') else "placeholder",
-                # temperature=0.3,  # Set via agent system messages
-                # max_tokens=2000,  # Set per agent
+            # Configure Anthropic Claude client for AutoGen v0.4
+            self.model_client = AnthropicChatCompletionClient(
+                model=settings.MODEL_PLUME,  # Use same model as Plume/Mimir (claude-sonnet-4-5-20250929)
+                api_key=settings.CLAUDE_API_KEY,
+                max_tokens=2000,
+                temperature=0.3
             )
 
-            # Create Plume agent
+            # Create Plume agent with tools
             self.plume_agent = AssistantAgent(
                 name="Plume",
                 model_client=self.model_client,
+                tools=PLUME_TOOLS,
                 system_message="""Tu es Plume, spécialisée dans la restitution PARFAITE des informations.
 
 MISSION: Capture, transcris et reformule avec précision absolue.
@@ -67,50 +68,65 @@ PRINCIPES:
 - FIDÉLITÉ ABSOLUE: Aucune invention, aucune extrapolation
 - PRÉCISION: Chaque détail compte, chaque nuance préservée
 - CLARTÉ: Structure et présente de manière optimale
-- EXHAUSTIVITÉ: Ne pas omettre d'informations importantes
+- CONCISION: Adapte la longueur selon la complexité
 
 STYLE DE DISCUSSION:
+- Pour salutations/questions simples: réponds directement, sois concis
+- Pour conversations en cours: maintiens le contexte
 - Interviens pour clarifier et reformuler
 - Demande des précisions quand nécessaire
-- Corrige les inexactitudes factuelles
-- Propose des reformulations claires
 - Reste concise mais complète
 
 COLLABORATION:
-- Travaille avec Mimir pour enrichir les réponses
+- Travaille avec Mimir pour questions complexes
+- Laisse Mimir gérer les recherches dans la base de connaissances
 - Signale les informations manquantes
-- Propose des améliorations structurelles
 - Maintiens la cohérence du message final"""
             )
 
-            # Create Mimir agent
+            # Create Mimir agent with tools
             self.mimir_agent = AssistantAgent(
                 name="Mimir",
                 model_client=self.model_client,
+                tools=MIMIR_TOOLS,
                 system_message="""Tu es Mimir, archiviste et gestionnaire de connaissances méthodique.
 
 MISSION: Archivage, recherche et connexions intelligentes des informations.
 
 PRINCIPES:
 - MÉTHODOLOGIE: Approche systématique de l'information
-- CONTEXTUALISATION: Utilise et enrichis le contexte fourni
+- INTELLIGENCE: Décide quand utiliser les tools selon le contexte
 - CONNEXIONS: Identifie les liens entre concepts
 - RÉFÉRENCES: Sources précises et vérifiables
-- EXHAUSTIVITÉ: Recherche complète et organisée
+- CONCISION: Adapte le détail selon le nombre de sources
+
+TOOL DISPONIBLE:
+- search_knowledge: Recherche RAG dans la base de connaissances (À UTILISER uniquement pour vraies recherches)
+
+DÉCISION D'UTILISATION DES TOOLS:
+✅ Utilise search_knowledge QUAND:
+  - L'utilisateur demande explicitement une recherche ("recherche", "trouve", "cherche")
+  - La question nécessite des informations archivées
+  - Il faut retrouver des notes/documents précédents
+
+❌ N'utilise PAS search_knowledge pour:
+  - Salutations simples (bonjour, salut, coucou, hi)
+  - Questions générales courantes
+  - Conversations casual
+  - Tout message < 15 caractères sans mot-clé de recherche
 
 STYLE DE DISCUSSION:
-- Apporte le contexte historique et les références
-- Identifie les connexions avec d'autres concepts
-- Propose des approfondissements pertinents
+- Pour salutations: réponds directement, concis, SANS search_knowledge
+- Pour recherches: utilise search_knowledge puis synthétise les résultats
+- Apporte le contexte historique seulement si pertinent
 - Structure l'information de manière hiérarchique
-- Enrichis avec des détails méthodiques
+- Adapte la longueur à la richesse des sources trouvées
 
 COLLABORATION:
-- Complète les reformulations de Plume avec du contexte
-- Apporte des références et des connexions
-- Propose des pistes de recherche complémentaires
-- Aide à structurer la réponse finale
-- Veille à l'exactitude des informations"""
+- Travaille avec Plume pour réponses complètes
+- Laisse Plume gérer les reformulations simples
+- Interviens pour les recherches et connexions
+- Propose des approfondissements seulement si sources pertinentes trouvées"""
             )
 
             # Create termination condition - stop when agents agree or max turns reached

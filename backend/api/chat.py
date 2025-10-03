@@ -15,11 +15,18 @@ import json
 import asyncio
 import time
 
+# Custom JSON encoder for datetime objects
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
 from agents.plume import PlumeAgent
 from agents.mimir import MimirAgent
 from agents.orchestrator import PlumeOrchestrator
 # from services.conversation_manager import ConversationManager  # TODO: Create this service
-# from database.supabase_client import get_supabase_client  # TODO: Create this service
+# from services.storage import supabase_client  # TODO: Create this service
 from config import settings
 from utils.logger import get_logger
 
@@ -278,6 +285,175 @@ async def chat_orchestrated(request: OrchestratedChatRequest, fastapi_request: R
             status_code=500,
             detail=f"Orchestrated chat processing failed: {str(e)}"
         )
+
+# Orchestrated SSE Streaming - AutoGen Discussion Visibility
+@router.post("/orchestrated/stream")
+async def chat_orchestrated_stream(request: OrchestratedChatRequest, fastapi_request: Request):
+    """
+    Orchestrated chat with Server-Sent Events streaming
+
+    Streams agent messages in real-time, making AutoGen discussion between
+    Plume and Mimir visible to the user.
+
+    SSE Event Types:
+    - start: Connection established
+    - processing: Node processing status
+    - agent_message: Message from Plume or Mimir
+    - complete: Processing complete with final result
+    - error: Error occurred
+    - keepalive: Connection keepalive ping
+    """
+
+    async def event_stream() -> AsyncGenerator[str, None]:
+        """Generate SSE events for orchestrated chat"""
+
+        logger.info("SSE: Starting event stream generator")
+
+        # Create async queue for messages
+        message_queue = asyncio.Queue()
+
+        try:
+            # Get orchestrator from app state
+            orchestrator: PlumeOrchestrator = fastapi_request.app.state.orchestrator
+            logger.info("SSE: Orchestrator retrieved from app state")
+
+            # Send initial start event
+            logger.info("SSE: Sending start event")
+            yield f"data: {json.dumps({'type': 'start', 'session_id': request.session_id or 'new', 'timestamp': datetime.now().isoformat()}, cls=DateTimeEncoder)}\n\n"
+            logger.info("SSE: Start event sent successfully")
+
+            # Start processing in background task
+            async def process_with_queue():
+                """Process request with SSE queue"""
+                logger.info("SSE: Background process_with_queue started")
+                try:
+                    logger.info("SSE: Calling orchestrator.process", message_length=len(request.message), mode=request.mode)
+                    result = await orchestrator.process(
+                        input_text=request.message,
+                        mode=request.mode,
+                        voice_data=request.voice_data,
+                        audio_format=request.audio_format,
+                        session_id=request.session_id,
+                        conversation_id=request.conversation_id,
+                        user_id=request.user_id,
+                        context_ids=request.context_ids,
+                        # Pass queue through state for discussion_node to use
+                        _sse_queue=message_queue
+                    )
+                    logger.info("SSE: Orchestrator.process completed successfully", agent_used=result.get('agent_used'))
+                    # Signal completion by putting None
+                    await message_queue.put(None)
+                    logger.info("SSE: Sent completion signal (None) to queue")
+                    return result
+                except Exception as e:
+                    logger.error(f"SSE: Processing error in stream: {str(e)}")
+                    await message_queue.put({'type': 'error', 'error': str(e), 'timestamp': datetime.now()})
+                    await message_queue.put(None)
+                    return None
+
+            # Start background processing
+            logger.info("SSE: Creating background process_task")
+            process_task = asyncio.create_task(process_with_queue())
+            logger.info("SSE: Background process_task created and started")
+
+            # Stream messages from queue
+            logger.info("SSE: Entering message streaming loop")
+            last_keepalive = time.time()
+            keepalive_interval = 15  # seconds
+            message_count = 0
+
+            while True:
+                try:
+                    # Wait for message with timeout for keepalive
+                    try:
+                        logger.debug("SSE: Waiting for message from queue (timeout 1s)")
+                        message = await asyncio.wait_for(message_queue.get(), timeout=1.0)
+                        message_count += 1
+                        logger.info("SSE: Received message from queue", message_number=message_count, message_type=message.get('type') if message else 'None')
+                    except asyncio.TimeoutError:
+                        logger.debug("SSE: Queue timeout (no message), checking status")
+                        # Check if we need to send keepalive
+                        if time.time() - last_keepalive > keepalive_interval:
+                            logger.info("SSE: Sending keepalive event")
+                            yield f"data: {json.dumps({'type': 'keepalive', 'timestamp': datetime.now()}, cls=DateTimeEncoder)}\n\n"
+                            last_keepalive = time.time()
+
+                        # Check if processing is done
+                        if process_task.done():
+                            logger.info("SSE: Background process_task completed, exiting loop")
+                            break
+
+                        continue
+
+                    # None signals completion
+                    if message is None:
+                        logger.info("SSE: Received completion signal (None), exiting loop")
+                        break
+
+                    # Send message as SSE event
+                    logger.info("SSE: Yielding message to client", message_type=message.get('type'))
+                    yield f"data: {json.dumps(message, cls=DateTimeEncoder)}\n\n"
+                    last_keepalive = time.time()
+
+                except Exception as e:
+                    logger.error(f"SSE: Stream error in loop: {str(e)}")
+                    yield f"data: {json.dumps({'type': 'error', 'error': str(e), 'timestamp': datetime.now()}, cls=DateTimeEncoder)}\n\n"
+                    break
+
+            # Get final result
+            logger.info("SSE: Retrieving final result from process_task")
+            try:
+                result = await process_task
+                logger.info("SSE: Final result retrieved", has_result=result is not None)
+
+                if result:
+                    # Send complete event with final result
+                    logger.info("SSE: Sending complete event with final result")
+                    complete_event = {
+                        'type': 'complete',
+                        'result': {
+                            'response': result['response'],
+                            'html': result.get('html'),
+                            'agent_used': result['agent_used'],
+                            'agents_involved': result.get('agents_involved', []),
+                            'discussion_history': result.get('discussion_history', []),
+                            'session_id': result['session_id'],
+                            'note_id': result.get('note_id'),
+                            'processing_time_ms': result['processing_time_ms'],
+                            'tokens_used': result['tokens_used'],
+                            'cost_eur': result['cost_eur'],
+                            'errors': result.get('errors', []),
+                            'warnings': result.get('warnings', [])
+                        },
+                        'timestamp': datetime.now()
+                    }
+                    yield f"data: {json.dumps(complete_event, cls=DateTimeEncoder)}\n\n"
+                    logger.info("SSE: Complete event sent successfully")
+
+            except Exception as e:
+                logger.error(f"SSE: Error getting final result: {str(e)}")
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e), 'timestamp': datetime.now()}, cls=DateTimeEncoder)}\n\n"
+
+            # Send termination signal
+            logger.info("SSE: Sending [DONE] termination signal")
+            yield "data: [DONE]\n\n"
+            logger.info("SSE: Event stream generator completed successfully", total_messages_sent=message_count)
+
+        except Exception as e:
+            logger.error(f"SSE: Critical stream error in event_stream: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e), 'timestamp': datetime.now()}, cls=DateTimeEncoder)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering for Render
+            "Content-Type": "text/event-stream"
+        }
+    )
 
 # Server-Sent Events (SSE) Endpoints
 

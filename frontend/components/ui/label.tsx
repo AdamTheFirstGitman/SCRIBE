@@ -7,9 +7,9 @@ const labelVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-gray-200",
-        muted: "text-gray-400",
-        accent: "text-plume-300"
+        default: "text-gray-900 dark:text-gray-200",
+        muted: "text-gray-600 dark:text-gray-400",
+        accent: "text-plume-600 dark:text-plume-300"
       }
     },
     defaultVariants: {
