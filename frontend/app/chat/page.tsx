@@ -16,7 +16,6 @@ import {
   Upload,
   Settings
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { OfflineUtils } from '../../lib/offline'
 
 // Types

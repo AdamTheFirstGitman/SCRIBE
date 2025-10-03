@@ -10,7 +10,6 @@ import {
   Volume2,
   VolumeX
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { transcribeAudio } from '../../lib/api/chat'
 
 interface VoiceRecorderProps {

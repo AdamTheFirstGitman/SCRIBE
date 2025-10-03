@@ -11,9 +11,7 @@ import { Button } from '../../components/ui/button'
 import { Textarea } from '../../components/ui/textarea'
 import { Note, NoteSearchResult } from '../../lib/types'
 import { getRecentNotes, searchNotes, uploadText, uploadAudio } from '../../lib/api/client'
-import { getErrorMessage } from '../../lib/api/error-handler'
 import { debounce } from '../../lib/utils'
-import { toast } from 'sonner'
 
 type UploadMode = 'text' | 'audio'
 
@@ -126,11 +124,7 @@ function ArchivesPage() {
     // TODO: Implement context audio recording in Phase 2
     console.log('Context audio recording not yet implemented')
     // Placeholder to use state
-    if (uploadMode === 'text') {
-      setTextContextAudio(null)
-    } else {
-      setAudioContextAudio(null)
-    }
+    setAudioContextAudio(null)
   }
 
   const handleContextAudioUpload = () => {

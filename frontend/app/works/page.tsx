@@ -9,8 +9,6 @@ import { Card, CardContent } from '../../components/ui/card'
 import { EmptyState } from '../../components/ui/empty-state'
 import { Conversation } from '../../lib/types'
 import { getConversations } from '../../lib/api/client'
-import { getErrorMessage } from '../../lib/api/error-handler'
-import { toast } from 'sonner'
 import { formatRelativeDate } from '../../lib/utils'
 
 function WorksPage() {

@@ -18,7 +18,6 @@ import {
   AlertCircle,
   X
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { uploadDocument } from '../../lib/api/upload'
 import { OfflineUtils } from '../../lib/offline'
 

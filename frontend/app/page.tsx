@@ -10,8 +10,6 @@ import { ChatMessage } from '../components/chat/ChatMessage'
 import { EmptyState } from '../components/ui/empty-state'
 import { ChatMessage as ChatMessageType } from '../lib/types'
 import { sendOrchestratedMessageStream, getNote } from '../lib/api/client'
-import { getErrorMessage } from '../lib/api/error-handler'
-import { toast } from 'sonner'
 
 function HomePage() {
   const searchParams = useSearchParams()
@@ -23,7 +21,7 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [contextBanner, setContextBanner] = useState<string | null>(null)
-  const [contextNoteId, setContextNoteId] = useState<string | null>(null)
+  const [_contextNoteId, setContextNoteId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
@@ -35,7 +33,9 @@ function HomePage() {
   useEffect(() => {
     if (context?.startsWith('note:')) {
       const noteId = context.split(':')[1]
-      loadNoteContext(noteId)
+      if (noteId) {
+        loadNoteContext(noteId)
+      }
     }
   }, [context])
 
@@ -88,7 +88,7 @@ function HomePage() {
         {
           message: userContent,
           mode: 'auto',
-          conversation_id: conversationId || undefined
+          ...(conversationId ? { conversation_id: conversationId } : {})
         },
         // onMessage: Display agent messages in real-time
         (sseMsg) => {
@@ -115,9 +115,9 @@ function HomePage() {
                 return [...filtered, {
                   id: agentMsgId,
                   role: sseMsg.agent as 'plume' | 'mimir',
-                  content: sseMsg.content,
+                  content: sseMsg.content || '',
                   timestamp: new Date(),
-                  metadata: sseMsg.metadata
+                  ...(sseMsg.metadata ? { metadata: sseMsg.metadata } : {})
                 }]
               }
             })

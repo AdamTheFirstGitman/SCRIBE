@@ -10,8 +10,6 @@ import { ThemeToggle } from '../../components/theme/ThemeToggle'
 import { useSession } from '../../lib/hooks/useSession'
 import { Metrics } from '../../lib/types'
 import { getMetrics } from '../../lib/api/client'
-import { getErrorMessage } from '../../lib/api/error-handler'
-import { toast } from 'sonner'
 
 function SettingsPage() {
   const { logout } = useSession()

@@ -8,9 +8,7 @@ import { Navigation } from '../../../components/layout/Navigation'
 import { Button } from '../../../components/ui/button'
 import { Note } from '../../../lib/types'
 import { getNote, convertToHTML } from '../../../lib/api/client'
-import { getErrorMessage } from '../../../lib/api/error-handler'
 import { cn } from '../../../lib/utils'
-import { toast } from 'sonner'
 
 type ViewMode = 'text' | 'html'
 

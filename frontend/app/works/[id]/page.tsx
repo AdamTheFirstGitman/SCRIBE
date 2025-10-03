@@ -10,8 +10,6 @@ import { ChatMessage } from '../../../components/chat/ChatMessage'
 import { Button } from '../../../components/ui/button'
 import { ChatMessage as ChatMessageType, Conversation } from '../../../lib/types'
 import { getConversation } from '../../../lib/api/client'
-import { getErrorMessage } from '../../../lib/api/error-handler'
-import { toast } from 'sonner'
 
 function ConversationPage() {
   const router = useRouter()
