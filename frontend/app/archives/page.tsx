@@ -29,7 +29,6 @@ function ArchivesPage() {
   // Text upload
   const [textContent, setTextContent] = useState('')
   const [textContext, setTextContext] = useState('')
-  const [textContextAudio, setTextContextAudio] = useState<File | null>(null)
 
   // Audio upload
   const [audioFile, setAudioFile] = useState<File | null>(null)
