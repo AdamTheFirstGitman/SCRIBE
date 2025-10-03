@@ -11,6 +11,7 @@ import {
   VolumeX
 } from 'lucide-react'
 import { transcribeAudio } from '../../lib/api/chat'
+import { toast } from 'sonner'
 
 interface VoiceRecorderProps {
   onTranscription: (text: string, confidence: number) => void

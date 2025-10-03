@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from './ThemeProvider'
-import { Moon, Sun, Monitor } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function ThemeToggle() {

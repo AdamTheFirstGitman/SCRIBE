@@ -8,6 +8,8 @@ import { Navigation } from '../../../components/layout/Navigation'
 import { Button } from '../../../components/ui/button'
 import { Note } from '../../../lib/types'
 import { getNote, convertToHTML } from '../../../lib/api/client'
+import { getErrorMessage } from '../../../lib/api/error-handler'
+import { toast } from 'sonner'
 import { cn } from '../../../lib/utils'
 
 type ViewMode = 'text' | 'html'

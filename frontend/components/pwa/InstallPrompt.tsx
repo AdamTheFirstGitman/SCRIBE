@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Download, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface BeforeInstallPromptEvent extends Event {
   platforms: string[]

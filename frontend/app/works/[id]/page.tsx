@@ -9,7 +9,7 @@ import { InputZone } from '../../../components/chat/InputZone'
 import { ChatMessage } from '../../../components/chat/ChatMessage'
 import { Button } from '../../../components/ui/button'
 import { ChatMessage as ChatMessageType, Conversation } from '../../../lib/types'
-import { getConversation } from '../../../lib/api/client'
+import { getConversation, sendChatMessage } from '../../../lib/api/client'
 
 function ConversationPage() {
   const router = useRouter()

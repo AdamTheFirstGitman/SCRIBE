@@ -17,6 +17,7 @@ import {
   Settings
 } from 'lucide-react'
 import { OfflineUtils } from '../../lib/offline'
+import { toast } from 'sonner'
 
 // Types
 type Agent = 'plume' | 'mimir'

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { uploadDocument } from '../../lib/api/upload'
 import { OfflineUtils } from '../../lib/offline'
+import { toast } from 'sonner'
 
 interface ProcessedDocument {
   id: string

@@ -11,6 +11,8 @@ import { Button } from '../../components/ui/button'
 import { Textarea } from '../../components/ui/textarea'
 import { Note, NoteSearchResult } from '../../lib/types'
 import { getRecentNotes, searchNotes, uploadText, uploadAudio } from '../../lib/api/client'
+import { getErrorMessage } from '../../lib/api/error-handler'
+import { toast } from 'sonner'
 import { debounce } from '../../lib/utils'
 
 type UploadMode = 'text' | 'audio'

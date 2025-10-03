@@ -10,6 +10,8 @@ import { ChatMessage } from '../components/chat/ChatMessage'
 import { EmptyState } from '../components/ui/empty-state'
 import { ChatMessage as ChatMessageType } from '../lib/types'
 import { sendOrchestratedMessageStream, getNote } from '../lib/api/client'
+import { getErrorMessage } from '../lib/api/error-handler'
+import { toast } from 'sonner'
 
 function HomePage() {
   const searchParams = useSearchParams()
