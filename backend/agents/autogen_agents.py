@@ -15,8 +15,12 @@ try:
     from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
     from autogen_ext.models.anthropic import AnthropicChatCompletionClient
     AUTOGEN_V4_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     # Fallback if autogen v0.4 is not available
+    # Log the specific import error for debugging
+    import sys
+    print(f"[DEBUG] AutoGen v0.4 import failed: {e}", file=sys.stderr)
+    print(f"[DEBUG] Import error type: {type(e).__name__}", file=sys.stderr)
     AUTOGEN_V4_AVAILABLE = False
 
 from agents.state import AgentState
