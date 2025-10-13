@@ -14,6 +14,7 @@ try:
     from autogen_agentchat.teams import RoundRobinGroupChat
     from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
     from autogen_ext.models.anthropic import AnthropicChatCompletionClient
+    from autogen_core.models import ModelInfo
     AUTOGEN_V4_AVAILABLE = True
 except ImportError as e:
     # Fallback if autogen v0.4 is not available
@@ -54,12 +55,21 @@ class AutoGenDiscussion:
             # Configure Anthropic Claude client for AutoGen v0.4
             # Using claude-sonnet-4-5-20250929 (Claude Sonnet 4.5, September 2024)
             # This is the CURRENT production model used by Plume/Mimir
-            # Supports function calling and tools
+            # CRITICAL: Must specify model_info with function_calling=True to enable tools
+            model_info = ModelInfo(
+                vision=False,
+                function_calling=True,  # Enable function calling for tools
+                json_output=False,
+                family="anthropic",
+                structured_output=True
+            )
+
             self.model_client = AnthropicChatCompletionClient(
                 model="claude-sonnet-4-5-20250929",  # Same model as settings.MODEL_PLUME
                 api_key=settings.CLAUDE_API_KEY,
                 max_tokens=2000,
-                temperature=0.3
+                temperature=0.3,
+                model_info=model_info  # Explicitly declare function calling support
             )
 
             # Create Plume agent with tools
