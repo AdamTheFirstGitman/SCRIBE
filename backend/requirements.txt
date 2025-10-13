@@ -12,9 +12,9 @@ anthropic>=0.40.0
 openai>=1.50.0
 
 # Microsoft AutoGen 2025 (New architecture)
-autogen-agentchat>=0.4.0.dev8
-autogen-ext[anthropic]>=0.4.0.dev8
-autogen-core>=0.4.0.dev8
+autogen-agentchat>=0.4.9
+autogen-ext[anthropic]>=0.4.9
+autogen-core>=0.4.9
 
 # Database & Storage (versions flexibles)
 supabase>=2.9.0
