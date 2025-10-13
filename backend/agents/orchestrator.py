@@ -794,7 +794,7 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             # Extract clickable objects from response (Phase 2.2)
             response = state.get("final_output", "")
             context_ids = state.get("context_ids", [])
-            clickable_objects = self._extract_clickable_objects(response, context_ids)
+            clickable_objects = self._extract_clickable_objects(response, context_ids, state)
 
             # Enrich metadata with clickable objects
             if not state.get("metadata"):
@@ -853,11 +853,12 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
     # HELPER METHODS
     # =============================================================================
 
-    def _extract_clickable_objects(self, response: str, context_note_ids: List[str] = None) -> List[Dict[str, Any]]:
+    def _extract_clickable_objects(self, response: str, context_note_ids: List[str] = None, state: AgentState = None) -> List[Dict[str, Any]]:
         """
         Extract clickable objects from agent response
 
         Detects:
+        - Created notes (from state.note_id)
         - [[Note Title]] references
         - URLs (web links)
         - Context notes used in RAG
@@ -865,6 +866,7 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
         Args:
             response: Agent response text
             context_note_ids: Note IDs used as context
+            state: Agent state (to detect created notes)
 
         Returns:
             List of clickable object dictionaries
@@ -873,6 +875,25 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
         objects = []
 
         try:
+            # Pattern 0: Created note (Priority - from tool execution)
+            if state and state.get("note_id"):
+                created_note_id = state["note_id"]
+                try:
+                    result = supabase_client.client.table('notes') \
+                        .select('id, title') \
+                        .eq('id', created_note_id) \
+                        .single() \
+                        .execute()
+
+                    if result.data:
+                        objects.append({
+                            'type': 'viz_link',
+                            'note_id': result.data['id'],
+                            'title': result.data['title']
+                        })
+                        logger.info("Added created note to clickable_objects", note_id=created_note_id)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch created note: {created_note_id}", error=str(e))
             # Pattern 1: Explicit note references [[Note Title]]
             note_refs = re.findall(r'\[\[([^\]]+)\]\]', response)
             for title in note_refs:
