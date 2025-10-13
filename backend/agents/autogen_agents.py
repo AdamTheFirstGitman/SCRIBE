@@ -52,8 +52,9 @@ class AutoGenDiscussion:
 
         try:
             # Configure Anthropic Claude client for AutoGen v0.4
+            # NOTE: Using claude-3-5-sonnet-20241022 because claude-sonnet-4-5-20250929 not recognized by AutoGen
             self.model_client = AnthropicChatCompletionClient(
-                model=settings.MODEL_PLUME,  # Use same model as Plume/Mimir (claude-sonnet-4-5-20250929)
+                model="claude-3-5-sonnet-20241022",  # Stable version with function calling support
                 api_key=settings.CLAUDE_API_KEY,
                 max_tokens=2000,
                 temperature=0.3
