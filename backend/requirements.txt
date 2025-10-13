@@ -11,10 +11,10 @@ langgraph-checkpoint-postgres>=1.0.0
 anthropic>=0.40.0
 openai>=1.50.0
 
-# Microsoft AutoGen 2025 (New architecture)
-autogen-agentchat>=0.4.9
-autogen-ext[anthropic]>=0.4.9
-autogen-core>=0.4.9
+# Microsoft AutoGen 2025 (New architecture) - Pin to 0.4.x to avoid 0.7+ breaking changes
+autogen-agentchat>=0.4.9,<0.5
+autogen-ext[anthropic]>=0.4.9,<0.5
+autogen-core>=0.4.9,<0.5
 
 # Database & Storage (versions flexibles)
 supabase>=2.9.0
