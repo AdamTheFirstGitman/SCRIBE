@@ -223,8 +223,8 @@ Refactorer l'orchestration pour que **les agents Plume et Mimir décident eux-m�
 ## 🚀 PHASE 2.3 : PROCHAINES ÉTAPES (À PLANIFIER)
 
 ### Database & Infrastructure
-- [ ] Appliquer migration 004 (fix hybrid_search SQL error) via Supabase SQL Editor
-- [ ] Tester hybrid search après migration (vérifier logs sans erreur)
+- [x] Appliquer migration 004 (fix hybrid_search SQL error) via Supabase SQL Editor ✅
+- [x] Tester hybrid search après migration (vérifier logs sans erreur) ✅ 13 oct 2025
 - [ ] Redis cache activé production
 - [ ] Monitoring événements SSE (Sentry)
 

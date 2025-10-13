@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { Textarea } from '../../components/ui/textarea'
@@ -14,24 +15,27 @@ import {
   User,
   Loader2,
   Upload,
-  Settings
+  Settings,
+  FileText,
+  Search,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react'
 import { OfflineUtils } from '../../lib/offline'
 import { toast } from 'sonner'
+import { sendOrchestratedMessageStream, SSEMessage } from '../../lib/api/client'
+import {
+  ChatMessage,
+  ToolActivity,
+  AgentName
+} from '../../types/chat'
 
-// Types
+// Legacy types for getAgentInfo
 type Agent = 'plume' | 'mimir'
-type MessageRole = 'user' | 'plume' | 'mimir'
-
-interface ChatMessage {
-  id: string
-  role: MessageRole
-  content: string
-  timestamp: Date
-  isLoading?: boolean
-}
 
 export default function ChatPage() {
+  const router = useRouter()
+
   // State management
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -49,10 +53,10 @@ export default function ChatPage() {
   ])
 
   const [inputText, setInputText] = useState('')
-  const [selectedAgent, setSelectedAgent] = useState<Agent>('plume')
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
+  const [currentToolActivities, setCurrentToolActivities] = useState<Map<string, ToolActivity>>(new Map())
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -88,7 +92,7 @@ export default function ChatPage() {
     }
   }, [inputText])
 
-  // Send message
+  // Send message with orchestrated API
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return
 
@@ -105,10 +109,11 @@ export default function ChatPage() {
     setInputText('')
     setIsLoading(true)
 
-    // Add loading message from selected agent
+    // Add loading message (agents will decide who responds)
+    const loadingMessageId = `loading-${Date.now()}`
     const loadingMessage: ChatMessage = {
-      id: `loading-${Date.now()}`,
-      role: selectedAgent,
+      id: loadingMessageId,
+      role: 'plume', // Placeholder, will be replaced
       content: '',
       timestamp: new Date(),
       isLoading: true
@@ -122,7 +127,6 @@ export default function ChatPage() {
         const offlineMessage = {
           id: Date.now().toString(),
           text: currentInput,
-          agent: selectedAgent,
           timestamp: Date.now(),
           retries: 0
         }
@@ -146,7 +150,7 @@ export default function ChatPage() {
         setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
         const offlineResponseMessage: ChatMessage = {
           id: `offline-${Date.now()}`,
-          role: selectedAgent,
+          role: 'plume',
           content: `📴 Message sauvegardé hors ligne. Il sera envoyé dès la reconnexion.`,
           timestamp: new Date()
         }
@@ -156,44 +160,129 @@ export default function ChatPage() {
         return
       }
 
-      // Online - simulate API call to agent
-      await simulateAgentResponse(currentInput, selectedAgent, loadingMessage.id)
+      // Online - call orchestrated API with SSE
+      let agentMessagesBuffer: Map<AgentName, string> = new Map()
+
+      await sendOrchestratedMessageStream(
+        {
+          message: currentInput,
+          mode: 'auto' // Agents decide automatically
+        },
+        // onMessage: Handle SSE events
+        (event: SSEMessage) => {
+          if (event.type === 'tool_start' && event.agent && event.tool) {
+            // Track tool activity
+            const activityId = `${event.agent}-${event.tool}-${Date.now()}`
+            const activity: ToolActivity = {
+              id: activityId,
+              agent: event.agent,
+              tool: event.tool as any, // Cast to ToolName
+              status: 'running',
+              startTime: Date.now(),
+              ...(event.params ? { params: event.params } : {})
+            }
+            setCurrentToolActivities(prev => new Map(prev).set(activityId, activity))
+          } else if (event.type === 'tool_complete' && event.agent && event.tool) {
+            // Update tool activity to completed
+            setCurrentToolActivities(prev => {
+              const updated = new Map(prev)
+              const existingActivity = Array.from(updated.values()).find(
+                a => a.agent === event.agent && a.tool === event.tool && a.status === 'running'
+              )
+              if (existingActivity && event.result) {
+                updated.set(existingActivity.id, {
+                  ...existingActivity,
+                  status: event.result.success ? 'completed' : 'failed',
+                  result: event.result,
+                  endTime: Date.now()
+                })
+              }
+              return updated
+            })
+          } else if (event.type === 'agent_message' && event.agent && event.content) {
+            // Buffer agent messages
+            const existing = agentMessagesBuffer.get(event.agent) || ''
+            agentMessagesBuffer.set(event.agent, existing + event.content)
+          }
+        },
+        // onComplete: Replace loading with final response
+        (result) => {
+          setIsLoading(false)
+
+          // Convert current tool activities to array
+          const toolActivities = Array.from(currentToolActivities.values())
+
+          // Remove loading message and add final response
+          setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
+
+          // Add messages from all agents who participated
+          const finalMessages: ChatMessage[] = []
+          agentMessagesBuffer.forEach((content, agent) => {
+            if (content.trim()) {
+              finalMessages.push({
+                id: `msg-${agent}-${Date.now()}`,
+                role: agent,
+                content: content.trim(),
+                timestamp: new Date(),
+                toolActivities: toolActivities.filter(a => a.agent === agent),
+                metadata: result.metadata
+              })
+            }
+          })
+
+          // If no buffered messages, use result.response
+          if (finalMessages.length === 0) {
+            finalMessages.push({
+              id: `msg-${result.agent}-${Date.now()}`,
+              role: result.agent,
+              content: result.response,
+              timestamp: new Date(),
+              toolActivities,
+              metadata: {
+                clickable_objects: result.clickable_objects,
+                ...result.metadata
+              }
+            })
+          } else {
+            // Add clickable_objects to last message
+            if (result.clickable_objects && finalMessages.length > 0) {
+              const lastMsg = finalMessages[finalMessages.length - 1]
+              if (lastMsg) {
+                lastMsg.metadata = {
+                  ...(lastMsg.metadata || {}),
+                  clickable_objects: result.clickable_objects
+                }
+              }
+            }
+          }
+
+          setMessages(prev => [...prev, ...finalMessages])
+
+          // Clear tool activities
+          setCurrentToolActivities(new Map())
+        },
+        // onError
+        (error) => {
+          console.error('Chat error:', error)
+          toast.error("Erreur de communication avec l'agent")
+          setIsLoading(false)
+
+          // Remove loading message
+          setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
+
+          // Clear tool activities
+          setCurrentToolActivities(new Map())
+        }
+      )
     } catch (error) {
       console.error('Chat error:', error)
       toast.error("Erreur de communication avec l'agent")
 
       // Remove loading message on error
-      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
-    } finally {
+      setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
       setIsLoading(false)
+      setCurrentToolActivities(new Map())
     }
-  }
-
-  // Simulate agent response (replace with real API calls)
-  const simulateAgentResponse = async (input: string, agent: Agent, loadingId: string) => {
-    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500))
-
-    const responses = {
-      plume: [
-        `🖋️ J'ai bien capturé ton message : "${input}". Veux-tu que je le reformule ou l'enrichisse ?`,
-        '✨ Message traité avec précision ! Je peux maintenant le structurer selon tes besoins.',
-        '📝 Parfait ! Ton idée est maintenant claire et bien organisée. Autre chose à traiter ?'
-      ],
-      mimir: [
-        `🧠 J'ai cherché "${input}" dans tes connaissances. Voici ce que j'ai trouvé...`,
-        "🔍 Analyse terminée ! J'ai trouvé plusieurs connections avec tes notes précédentes.",
-        "💡 Intéressant ! Cette requête me rappelle d'autres éléments de ta base de connaissances."
-      ]
-    }
-
-    const agentResponse = responses[agent][Math.floor(Math.random() * responses[agent].length)]
-
-    // Replace loading message with actual response
-    setMessages(prev => prev.map(msg =>
-      msg.id === loadingId
-        ? { ...msg, content: agentResponse, isLoading: false } as ChatMessage
-        : msg
-    ))
   }
 
   // Handle voice recording
@@ -237,8 +326,6 @@ export default function ChatPage() {
     }[agent]
   }
 
-  const selectedAgentInfo = getAgentInfo(selectedAgent)
-
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
 
@@ -262,43 +349,14 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Agent Selection */}
+      {/* Info Banner - Mode Auto */}
       <div className="bg-gray-900/30 border-b border-gray-800 p-4 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm font-medium text-gray-300">Parler avec :</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {(['plume', 'mimir'] as Agent[]).map((agent) => {
-              const info = getAgentInfo(agent)
-              const Icon = info.icon
-              const isSelected = selectedAgent === agent
-
-              return (
-                <button
-                  key={agent}
-                  onClick={() => setSelectedAgent(agent)}
-                  className={`
-                    p-3 rounded-lg border-2 transition-all text-left
-                    ${isSelected
-                      ? 'border-plume-500/50 bg-plume-500/10'
-                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                    }
-                  `}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${info.bgColor}`}>
-                      <Icon className={`h-4 w-4 ${info.color}`} />
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-100">{info.name}</div>
-                      <div className="text-xs text-gray-400">{info.description}</div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Brain className="h-4 w-4 text-plume-500" />
+            <span>
+              Mode <strong className="text-gray-200">Auto</strong> : Les agents décident intelligemment qui répond
+            </span>
           </div>
         </div>
       </div>
@@ -336,19 +394,141 @@ export default function ChatPage() {
                   max-w-[80%] shadow-sm
                   ${isUser ? 'bg-plume-500/20 border-plume-500/30' : 'bg-gray-800/50 border-gray-700'}
                 `}>
-                  <CardContent className="p-3">
+                  <CardContent className="p-3 space-y-2">
                     {message.isLoading ? (
                       <div className="flex items-center gap-2 text-gray-400">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span className="text-sm">{agentInfo?.name} réfléchit...</span>
                       </div>
                     ) : (
-                      <div
-                        className={`text-sm whitespace-pre-wrap ${isUser ? 'text-plume-50' : 'text-gray-200'}`}
-                        dangerouslySetInnerHTML={{
-                          __html: message.content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                        }}
-                      />
+                      <>
+                        {/* Tool Activities Badges */}
+                        {message.toolActivities && message.toolActivities.length > 0 && (
+                          <div className="space-y-1.5 pb-2 border-b border-gray-700/50">
+                            {message.toolActivities.map((activity) => {
+                              const getToolIcon = (tool: string) => {
+                                switch (tool) {
+                                  case 'search_knowledge':
+                                  case 'web_search':
+                                    return Search
+                                  case 'create_note':
+                                  case 'update_note':
+                                    return FileText
+                                  default:
+                                    return Brain
+                                }
+                              }
+
+                              const getToolLabel = (tool: string) => {
+                                switch (tool) {
+                                  case 'search_knowledge':
+                                    return 'Recherche dans les archives'
+                                  case 'web_search':
+                                    return 'Recherche web'
+                                  case 'get_related_content':
+                                    return 'Contenus similaires'
+                                  case 'create_note':
+                                    return 'Création de note'
+                                  case 'update_note':
+                                    return 'Mise à jour de note'
+                                  default:
+                                    return tool
+                                }
+                              }
+
+                              const ToolIcon = getToolIcon(activity.tool)
+
+                              if (activity.status === 'running') {
+                                return (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center gap-2 text-xs text-gray-400"
+                                  >
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span>{getToolLabel(activity.tool)} en cours...</span>
+                                  </div>
+                                )
+                              }
+
+                              if (activity.status === 'completed') {
+                                const result = activity.result
+                                let resultText = ''
+
+                                if (result?.results_count !== undefined) {
+                                  resultText = `${result.results_count} résultat${result.results_count > 1 ? 's' : ''}`
+                                } else if (result?.note_id) {
+                                  resultText = 'Note créée'
+                                } else {
+                                  resultText = 'Terminé'
+                                }
+
+                                const duration = activity.endTime
+                                  ? ` (${activity.endTime - activity.startTime}ms)`
+                                  : ''
+
+                                return (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center gap-2 text-xs text-green-400"
+                                  >
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    <ToolIcon className="h-3 w-3" />
+                                    <span>
+                                      {resultText}
+                                      {duration && <span className="text-gray-500">{duration}</span>}
+                                    </span>
+                                  </div>
+                                )
+                              }
+
+                              if (activity.status === 'failed') {
+                                return (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center gap-2 text-xs text-red-400"
+                                  >
+                                    <XCircle className="h-3 w-3" />
+                                    <span>{getToolLabel(activity.tool)} échoué</span>
+                                  </div>
+                                )
+                              }
+
+                              return null
+                            })}
+                          </div>
+                        )}
+
+                        {/* Message content */}
+                        <div
+                          className={`text-sm whitespace-pre-wrap ${isUser ? 'text-plume-50' : 'text-gray-200'}`}
+                          dangerouslySetInnerHTML={{
+                            __html: message.content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          }}
+                        />
+
+                        {/* Clickable Objects (Viz Links) */}
+                        {message.metadata?.clickable_objects && message.metadata.clickable_objects.length > 0 && (
+                          <div className="pt-2 border-t border-gray-700/50 space-y-2">
+                            {message.metadata.clickable_objects.map((obj, idx) => {
+                              if (obj.type === 'viz_link' && obj.note_id) {
+                                return (
+                                  <Button
+                                    key={idx}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.push(`/viz/${obj.note_id}`)}
+                                    className="w-full justify-start gap-2 text-plume-400 border-plume-500/30 hover:bg-plume-500/10"
+                                  >
+                                    <FileText className="h-4 w-4" />
+                                    {obj.title || 'Voir la note'} →
+                                  </Button>
+                                )
+                              }
+                              return null
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -370,17 +550,6 @@ export default function ChatPage() {
       {/* Input Area */}
       <div className="bg-gray-900/50 border-t border-gray-800 p-4 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto">
-
-          {/* Selected agent indicator */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className={`p-1.5 rounded-full ${selectedAgentInfo.bgColor}`}>
-              <selectedAgentInfo.icon className={`h-3 w-3 ${selectedAgentInfo.color}`} />
-            </div>
-            <span className="text-sm text-gray-400">
-              Message pour <strong className="text-gray-200">{selectedAgentInfo.name}</strong>
-            </span>
-          </div>
-
           <div className="flex items-end gap-2">
 
             {/* Voice Recording Button */}
@@ -404,7 +573,7 @@ export default function ChatPage() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={`Écris ton message pour ${selectedAgentInfo.name}...`}
+                placeholder="Écris ton message pour les agents..."
                 className="min-h-[44px] max-h-32 resize-none pr-12"
                 rows={1}
               />

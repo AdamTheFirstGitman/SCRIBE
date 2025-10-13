@@ -137,9 +137,11 @@ interface ConvertHTMLResponse {
 // === SSE Types ===
 
 export interface SSEMessage {
-  type: 'agent_message' | 'processing' | 'complete' | 'error'
+  type: 'agent_message' | 'processing' | 'complete' | 'error' | 'tool_start' | 'tool_complete' | 'start'
   agent?: 'plume' | 'mimir'
   content?: string
+  tool?: string
+  params?: Record<string, any>
   result?: any
   error?: string
   metadata?: {
