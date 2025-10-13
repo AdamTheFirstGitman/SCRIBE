@@ -15,6 +15,7 @@ openai>=1.50.0
 autogen-agentchat>=0.4.9,<0.5
 autogen-ext>=0.4.9,<0.5  # anthropic extra not available in 0.4.x, using separate anthropic package
 autogen-core>=0.4.9,<0.5
+tiktoken>=0.7.0  # Required by autogen for token counting
 
 # Database & Storage (versions flexibles)
 supabase>=2.9.0
