@@ -52,10 +52,11 @@ class AutoGenDiscussion:
 
         try:
             # Configure Anthropic Claude client for AutoGen v0.4
-            # NOTE: Using claude-3-5-sonnet-20241022 (Claude 3.5 Sonnet v2, October 2024)
-            # Format with date required by AutoGen - supports function calling
+            # Using claude-sonnet-4-5-20250929 (Claude Sonnet 4.5, September 2024)
+            # This is the CURRENT production model used by Plume/Mimir
+            # Supports function calling and tools
             self.model_client = AnthropicChatCompletionClient(
-                model="claude-3-5-sonnet-20241022",  # Stable version with verified function calling
+                model="claude-sonnet-4-5-20250929",  # Same model as settings.MODEL_PLUME
                 api_key=settings.CLAUDE_API_KEY,
                 max_tokens=2000,
                 temperature=0.3
