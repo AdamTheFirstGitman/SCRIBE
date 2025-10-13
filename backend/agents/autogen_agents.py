@@ -52,9 +52,9 @@ class AutoGenDiscussion:
 
         try:
             # Configure Anthropic Claude client for AutoGen v0.4
-            # NOTE: Using claude-3-5-sonnet-20241022 because claude-sonnet-4-5-20250929 not recognized by AutoGen
+            # NOTE: Using claude-sonnet-4-5 (official Anthropic API model ID)
             self.model_client = AnthropicChatCompletionClient(
-                model="claude-3-5-sonnet-20241022",  # Stable version with function calling support
+                model="claude-sonnet-4-5",  # Latest Sonnet with function calling support
                 api_key=settings.CLAUDE_API_KEY,
                 max_tokens=2000,
                 temperature=0.3
