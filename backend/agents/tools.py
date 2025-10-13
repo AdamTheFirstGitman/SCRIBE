@@ -202,12 +202,14 @@ async def create_note(
         logger.info("Tool create_note called", title=title[:50])
 
         # Préparer les données de la note
+        note_metadata = metadata or {}
+        note_metadata["source"] = "plume_agent"  # Add source to metadata JSONB
+
         note_data = {
             "title": title,
             "text_content": content,
-            "metadata": metadata or {},
-            "tags": metadata.get("tags", []) if metadata else [],
-            "source": "plume_agent"
+            "metadata": note_metadata,
+            "tags": metadata.get("tags", []) if metadata else []
         }
 
         # Créer la note
