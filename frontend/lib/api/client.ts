@@ -14,7 +14,8 @@ import { handleResponse } from './error-handler'
 
 // === Configuration ===
 
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8000'
+// HARDCODED temporarily because Render env vars not working via MCP
+const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'https://scribe-api-uj22.onrender.com'
 
 /**
  * Get user_id from localStorage session
