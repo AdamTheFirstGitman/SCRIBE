@@ -558,8 +558,29 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
                         'timestamp': datetime.now().isoformat()
                     })
 
-                # Run the group chat
-                result = await autogen_discussion.group_chat.run(task=task_message)
+                # Run the group chat with retry on rate limit/overload
+                max_retries = 3
+                retry_delay = 2  # seconds
+                result = None
+
+                for attempt in range(max_retries):
+                    try:
+                        result = await autogen_discussion.group_chat.run(task=task_message)
+                        break  # Success
+                    except Exception as api_error:
+                        error_msg = str(api_error).lower()
+                        if "overloaded" in error_msg or "rate" in error_msg:
+                            if attempt < max_retries - 1:
+                                wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                                logger.warning(f"API overloaded, retry {attempt+1}/{max_retries} after {wait_time}s")
+                                await asyncio.sleep(wait_time)
+                            else:
+                                raise  # Final attempt failed
+                        else:
+                            raise  # Not a rate limit error
+
+                if result is None:
+                    raise Exception("Discussion failed after retries")
 
                 # Extract messages from result
                 messages = result.messages if hasattr(result, 'messages') else []
@@ -668,18 +689,32 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
 
         except Exception as e:
             logger.error("Discussion failed", error=str(e))
-            add_error(state, f"AutoGen discussion failed: {str(e)}")
+            error_msg = str(e).lower()
 
-            # Send error event to SSE if available
+            # User-friendly error message
+            if "overloaded" in error_msg or "rate" in error_msg:
+                user_error = "🔄 L'API IA est surchargée. Réessaye dans quelques secondes."
+            elif "timeout" in error_msg:
+                user_error = "⏱️ Le traitement a pris trop de temps. Simplifie ta demande."
+            else:
+                user_error = f"❌ Erreur : {str(e)}"
+
+            add_error(state, user_error)
+
+            # Send user-friendly error to SSE
             if self._current_sse_queue:
                 try:
                     await self._current_sse_queue.put({
                         'type': 'error',
-                        'error': str(e),
+                        'error': user_error,
                         'timestamp': datetime.now().isoformat()
                     })
                 except:
                     pass
+
+            # Add fallback response in state
+            state["final_output"] = user_error
+            state["final_html"] = f"<p>{user_error}</p>"
 
             return state
 
