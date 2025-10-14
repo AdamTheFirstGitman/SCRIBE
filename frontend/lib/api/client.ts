@@ -137,13 +137,17 @@ interface ConvertHTMLResponse {
 // === SSE Types ===
 
 export interface SSEMessage {
-  type: 'agent_message' | 'processing' | 'complete' | 'error' | 'tool_start' | 'tool_complete' | 'start'
+  type: 'agent_message' | 'processing' | 'complete' | 'error' | 'tool_start' | 'tool_complete' | 'tool_activity' | 'start'
   agent?: 'plume' | 'mimir'
   content?: string
   tool?: string
   params?: Record<string, any>
   result?: any
   error?: string
+  // NEW: Filtered tool activity from backend (Layer 2)
+  label?: string  // UI-friendly label (e.g., "🔍 Recherche archives")
+  summary?: string  // UI-friendly summary (e.g., "5 résultats")
+  status?: 'running' | 'completed' | 'failed'
   metadata?: {
     processing_time?: number
     tokens_used?: number

@@ -21,6 +21,7 @@ from services.cache import cache_manager
 from services.intent_classifier import intent_classifier
 from services.memory_service import memory_service
 from utils.logger import get_agent_logger, get_logger
+from utils.message_filter import filter_for_ui, filter_tool_for_ui, should_create_archive_note
 from config import settings
 
 logger = get_logger(__name__)
@@ -586,21 +587,26 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
                     if source in ["User", "user"] or not content.strip():
                         continue
 
+                    # Store UNFILTERED message in history (for backend logging)
                     message_data = {
                         'agent': source.lower(),
                         'message': content,
                         'timestamp': datetime.now().isoformat(),
                         'to': 'mimir' if source.lower() == 'plume' else 'plume'
                     }
-
-                    # Store in history
                     discussion_history.append(message_data)
 
-                    # Stream to SSE if queue exists
+                    # FILTER message for frontend UI (Layer 2)
+                    filtered_msg = filter_for_ui(source.lower(), content)
+
+                    # Stream FILTERED message to SSE if queue exists
                     if sse_queue:
                         await sse_queue.put({
                             'type': 'agent_message',
-                            **message_data
+                            'agent': filtered_msg['agent'],
+                            'content': filtered_msg['content'],
+                            'action_summary': filtered_msg.get('action_summary'),
+                            'timestamp': filtered_msg['timestamp']
                         })
 
                 # Extract final response
@@ -680,6 +686,10 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
     async def storage_node(self, state: AgentState) -> AgentState:
         """
         Store conversation and results with memory persistence
+
+        WORKS vs ARCHIVES strategy:
+        - ALWAYS store in conversations (Works) → 100% chat history
+        - CONDITIONALLY create note in Archives → IF create_note tool used OR explicit request
         """
         logger.info("Storing conversation results")
 
@@ -692,8 +702,10 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
 
             conversation_id = state.get("conversation_id")
 
-            # Store user message first if conversation_id exists
+            # ========== WORKS (ALWAYS) ==========
+            # Store conversation in Works (conversations table) - 100% of chats
             if conversation_id:
+                # Store user message
                 user_message_id = await memory_service.store_message(
                     conversation_id=conversation_id,
                     role="user",
@@ -706,62 +718,64 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
                 )
 
                 if user_message_id:
-                    logger.info("User message stored", message_id=user_message_id)
+                    logger.info("User message stored in Works", message_id=user_message_id)
 
-            # Prepare note data
-            note_data = {
-                "title": self._generate_title(state.get("input", "")),
-                "text_content": state.get("final_output", ""),
-                "html_content": state.get("final_html"),
-                "metadata": {
-                    "agent_used": state.get("agent_used"),
-                    "agents_involved": state.get("agents_involved", []),
-                    "session_id": state.get("session_id"),
-                    "conversation_id": conversation_id,
-                    "processing_time_ms": state.get("processing_time_ms"),
-                    "tokens_used": state.get("tokens_used", 0),
-                    "cost_eur": state.get("cost_eur", 0.0),
-                    "source": "conversation"
-                },
-                "tags": ["conversation", state.get("agent_used", "unknown")]
-            }
+                # Store agent response
+                agent_message_id = await memory_service.store_message(
+                    conversation_id=conversation_id,
+                    role=state.get("agent_used", "system"),
+                    content=state.get("final_output", ""),
+                    metadata={
+                        "processing_time_ms": state.get("processing_time_ms"),
+                        "tokens_used": state.get("tokens_used", 0),
+                        "cost_eur": state.get("cost_eur", 0.0),
+                        "timestamp": datetime.utcnow().isoformat()
+                    },
+                    create_embedding=True
+                )
 
-            # Store in database
-            start_time = time.time()
-            result = await supabase_client.create_note(note_data)
-            duration_ms = (time.time() - start_time) * 1000
+                if agent_message_id:
+                    logger.info("Agent response stored in Works", message_id=agent_message_id)
 
-            if result:
-                state["note_id"] = result["id"]
-                state["storage_status"] = "success"
-                logger.info("Note stored successfully", note_id=result["id"])
+            # ========== ARCHIVES (CONDITIONAL) ==========
+            # Only create note in Archives if create_note tool was used OR explicit user request
+            if should_create_archive_note({
+                "user_input": state.get("input", ""),
+                "tools_used": state.get("tools_used", [])  # TODO: Track tools used in state
+            }):
+                logger.info("Creating note in Archives (create_note tool used or explicit request)")
 
-                # Create embeddings for future retrieval
-                asyncio.create_task(self._create_embeddings_async(result["id"], note_data["text_content"]))
+                # Prepare note data for Archives
+                note_data = {
+                    "title": self._generate_title(state.get("input", "")),
+                    "text_content": state.get("final_output", ""),
+                    "html_content": state.get("final_html"),
+                    "metadata": {
+                        "agent_used": state.get("agent_used"),
+                        "agents_involved": state.get("agents_involved", []),
+                        "session_id": state.get("session_id"),
+                        "conversation_id": conversation_id,
+                        "processing_time_ms": state.get("processing_time_ms"),
+                        "tokens_used": state.get("tokens_used", 0),
+                        "cost_eur": state.get("cost_eur", 0.0),
+                        "source": "conversation"
+                    },
+                    "tags": ["conversation", state.get("agent_used", "unknown")]
+                }
 
-                # Store agent response in conversation if conversation_id exists
-                if conversation_id:
-                    agent_message_id = await memory_service.store_message(
-                        conversation_id=conversation_id,
-                        role=state.get("agent_used", "system"),
-                        content=state.get("final_output", ""),
-                        metadata={
-                            "note_id": result["id"],
-                            "processing_time_ms": state.get("processing_time_ms"),
-                            "tokens_used": state.get("tokens_used", 0),
-                            "cost_eur": state.get("cost_eur", 0.0),
-                            "timestamp": datetime.utcnow().isoformat()
-                        },
-                        create_embedding=True
-                    )
+                # Store in Archives (notes table)
+                start_time = time.time()
+                result = await supabase_client.create_note(note_data)
+                duration_ms = (time.time() - start_time) * 1000
 
-                    if agent_message_id:
-                        logger.info("Agent response stored", message_id=agent_message_id)
+                if result:
+                    state["note_id"] = result["id"]
+                    logger.info("Note created in Archives", note_id=result["id"])
 
-            else:
-                state["storage_status"] = "failed"
-                add_error(state, "Failed to store note")
+                    # Create embeddings for future retrieval
+                    asyncio.create_task(self._create_embeddings_async(result["id"], note_data["text_content"]))
 
+            state["storage_status"] = "success"
             return state
 
         except Exception as e:

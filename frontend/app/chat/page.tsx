@@ -170,16 +170,29 @@ export default function ChatPage() {
         },
         // onMessage: Handle SSE events
         (event: SSEMessage) => {
-          if (event.type === 'tool_start' && event.agent && event.tool) {
-            // Track tool activity
+          if (event.type === 'tool_activity' && event.tool) {
+            // Backend envoie tool activities FILTRÉES (badges UI-friendly)
+            // Format: { tool, label, status, summary, timestamp }
+            const activityId = `${event.tool}-${Date.now()}`
+            const activity: ToolActivity = {
+              id: activityId,
+              agent: (event.agent || 'plume') as AgentName,
+              tool: event.tool as any,
+              status: event.status || 'running',
+              startTime: Date.now(),
+              ...(event.label && { label: event.label }),
+              ...(event.summary && { summary: event.summary })
+            }
+            setCurrentToolActivities(prev => new Map(prev).set(activityId, activity))
+          } else if (event.type === 'tool_start' && event.agent && event.tool) {
+            // Fallback legacy tool_start (si backend n'utilise pas tool_activity)
             const activityId = `${event.agent}-${event.tool}-${Date.now()}`
             const activity: ToolActivity = {
               id: activityId,
               agent: event.agent,
-              tool: event.tool as any, // Cast to ToolName
+              tool: event.tool as any,
               status: 'running',
-              startTime: Date.now(),
-              ...(event.params ? { params: event.params } : {})
+              startTime: Date.now()
             }
             setCurrentToolActivities(prev => new Map(prev).set(activityId, activity))
           } else if (event.type === 'tool_complete' && event.agent && event.tool) {
@@ -200,7 +213,8 @@ export default function ChatPage() {
               return updated
             })
           } else if (event.type === 'agent_message' && event.agent && event.content) {
-            // Buffer agent messages
+            // Backend envoie messages FILTRÉS (Layer 2)
+            // Pas de reasoning/debug/tool_params ici
             const existing = agentMessagesBuffer.get(event.agent) || ''
             agentMessagesBuffer.set(event.agent, existing + event.content)
           }

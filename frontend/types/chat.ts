@@ -109,6 +109,9 @@ export interface ToolActivity {
   }
   startTime: number
   endTime?: number
+  // NEW: Backend filtering Layer 2 (UI-friendly)
+  label?: string  // e.g., "🔍 Recherche archives"
+  summary?: string  // e.g., "5 résultats"
 }
 
 // === Chat Message Types ===
