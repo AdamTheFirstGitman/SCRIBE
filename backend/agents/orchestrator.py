@@ -716,6 +716,12 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             state["final_output"] = user_error
             state["final_html"] = f"<p>{user_error}</p>"
 
+            # CRITICAL: Set end_time to calculate correct processing_time_ms
+            state["end_time"] = datetime.utcnow()
+            if state.get("start_time"):
+                duration = state["end_time"] - state["start_time"]
+                state["processing_time_ms"] = duration.total_seconds() * 1000
+
             return state
 
     async def storage_node(self, state: AgentState) -> AgentState:
