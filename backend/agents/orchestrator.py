@@ -658,9 +658,18 @@ class PlumeOrchestrator:
             # Update state
             state["discussion_history"] = discussion_history
             state["final_output"] = final_response
+
+            # Filter messages for HTML display
+            from utils.message_filter import filter_for_ui
+            filtered_discussion = [
+                {'name': m['agent'].title(), 'content': filter_for_ui(m['message'])}
+                for m in discussion_history
+            ]
+            filtered_final_response = filter_for_ui(final_response)
+
             state["final_html"] = autogen_discussion._generate_discussion_html_v4(
-                [{'name': m['agent'].title(), 'content': m['message']} for m in discussion_history],
-                final_response
+                filtered_discussion,
+                filtered_final_response
             )
             state["agents_involved"] = ["plume", "mimir"]
 

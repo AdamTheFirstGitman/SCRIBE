@@ -30,12 +30,20 @@ class MessageFilter:
         r'Tool params:.*?(?=\n|$)',  # Tool params line
         r'\{.*?"function":\s*".*?".*?\}',
         r'<tool_.*?>.*?</tool_.*?>',
+        # AutoGen FunctionCall and FunctionExecutionResult (CRITICAL)
+        r'\[FunctionCall\(.*?\)\]',
+        r'\[FunctionExecutionResult\(.*?\)\]',
+        r'FunctionCall\(.*?\)',
+        r'FunctionExecutionResult\(.*?\)',
         # Python dicts from tool returns (common patterns)
         r'\{\s*[\'"]success[\'"]\s*:\s*\w+.*?\}',
         r'\{\s*[\'"]results[\'"]\s*:\s*\[.*?\].*?\}',
         r'\{\s*[\'"]error[\'"]\s*:\s*.*?\}',
         r'\{\s*[\'"]count[\'"]\s*:\s*\d+.*?\}',
         r'\{\s*[\'"]note_id[\'"]\s*:\s*.*?\}',
+        r'\{\s*[\'"]title[\'"]\s*:\s*.*?\}',
+        # Multiline dicts (greedy match for complex nested structures)
+        r'\{[\'"]success[\'"]:\s*\w+,.*?\}',
     ]
 
     @classmethod
