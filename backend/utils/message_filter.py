@@ -30,6 +30,12 @@ class MessageFilter:
         r'Tool params:.*?(?=\n|$)',  # Tool params line
         r'\{.*?"function":\s*".*?".*?\}',
         r'<tool_.*?>.*?</tool_.*?>',
+        # Python dicts from tool returns (common patterns)
+        r'\{\s*[\'"]success[\'"]\s*:\s*\w+.*?\}',
+        r'\{\s*[\'"]results[\'"]\s*:\s*\[.*?\].*?\}',
+        r'\{\s*[\'"]error[\'"]\s*:\s*.*?\}',
+        r'\{\s*[\'"]count[\'"]\s*:\s*\d+.*?\}',
+        r'\{\s*[\'"]note_id[\'"]\s*:\s*.*?\}',
     ]
 
     @classmethod

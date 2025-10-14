@@ -40,6 +40,10 @@ async def search_knowledge(
 
     Returns:
         Dict avec 'results' (liste de documents trouvés) et 'count' (nombre total)
+
+    IMPORTANT: Synthétise résultats EN PHRASES NATURELLES pour l'user:
+    ✅ "J'ai trouvé X documents sur [sujet]. Voici les points clés : ..."
+    ❌ PAS de dict Python brut : {'success': True, 'results': [...]}
     """
     try:
         logger.info("Tool search_knowledge called", query=query, limit=limit)
@@ -92,6 +96,10 @@ async def web_search(
 
     Returns:
         Dict avec 'results' (liste de résultats web), 'count', et 'sources'
+
+    IMPORTANT: Synthétise résultats EN PHRASES NATURELLES pour l'user:
+    ✅ "J'ai trouvé X sources sur [sujet]. Voici ce que j'ai appris : ..."
+    ❌ PAS de dict Python brut : {'success': True, 'results': [...]}
     """
     try:
         logger.info("Tool web_search called", query=query, max_results=max_results)
@@ -185,18 +193,27 @@ async def create_note(
     """
     Crée une nouvelle note dans les archives.
 
-    Utilise cette fonction quand:
-    - Tu dois sauvegarder une restitution importante
-    - L'utilisateur demande explicitement de sauvegarder quelque chose
-    - Une synthèse ou reformulation mérite d'être archivée
+    Utilise cette fonction AUTOMATIQUEMENT quand:
+    - User demande "compte rendu", "synthèse", "note", "résumé", "fais-moi", "rédige"
+    - Tu as rédigé contenu substantiel (>100 mots) qui mérite d'être archivé
+    - C'est une information importante à garder (pas salutation/confirmation)
+
+    NE PAS utiliser pour:
+    - Réponses courtes (<50 mots)
+    - Confirmations simples ("OK", "Compris")
+    - Salutations ou conversations casual
 
     Args:
-        title: Titre de la note
-        content: Contenu textuel de la note
+        title: Titre de la note (clair et descriptif)
+        content: Contenu textuel de la note (bien formaté)
         metadata: Métadonnées optionnelles (tags, source, etc.)
 
     Returns:
-        Dict avec 'success', 'note_id', et détails de la note créée
+        Dict avec 'success', 'note_id', 'title', 'created_at'
+
+    IMPORTANT: Après utilisation, réponds à l'user en phrases naturelles:
+    ✅ "Note créée : *{title}*" ou "✅ J'ai sauvegardé : *{title}*"
+    ❌ PAS de dict Python brut : {'success': True, 'note_id': '...'}
     """
     try:
         logger.info("Tool create_note called", title=title[:50])

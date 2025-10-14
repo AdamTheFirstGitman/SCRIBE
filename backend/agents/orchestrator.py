@@ -537,13 +537,9 @@ class PlumeOrchestrator:
             # Prepare context summary
             context_summary = autogen_discussion._prepare_context_summary(context)
 
-            # Format the initial task message
-            task_message = f"""Question utilisateur: {input_text}
-
-Contexte disponible:
-{context_summary}
-
-Travaillez ensemble pour fournir une réponse complète et précise."""
+            # Format the initial task message (simplified - just user input)
+            # Agents have detailed system messages, no need for verbose instructions
+            task_message = input_text
 
             discussion_history = []
 
@@ -742,41 +738,78 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
                 return state
 
             conversation_id = state.get("conversation_id")
+            user_id = state.get("user_id", "king_001")
 
             # ========== WORKS (ALWAYS) ==========
             # Store conversation in Works (conversations table) - 100% of chats
-            if conversation_id:
-                # Store user message
-                user_message_id = await memory_service.store_message(
-                    conversation_id=conversation_id,
-                    role="user",
-                    content=state.get("input", ""),
-                    metadata={
-                        "session_id": state.get("session_id"),
-                        "timestamp": datetime.utcnow().isoformat()
-                    },
-                    create_embedding=True
-                )
 
-                if user_message_id:
-                    logger.info("User message stored in Works", message_id=user_message_id)
+            # Create or get conversation
+            if not conversation_id:
+                conversation_id = str(uuid.uuid4())
+                state["conversation_id"] = conversation_id
 
-                # Store agent response
-                agent_message_id = await memory_service.store_message(
-                    conversation_id=conversation_id,
-                    role=state.get("agent_used", "system"),
-                    content=state.get("final_output", ""),
-                    metadata={
-                        "processing_time_ms": state.get("processing_time_ms"),
-                        "tokens_used": state.get("tokens_used", 0),
-                        "cost_eur": state.get("cost_eur", 0.0),
-                        "timestamp": datetime.utcnow().isoformat()
-                    },
-                    create_embedding=True
-                )
+            # Generate title from user input
+            conversation_title = self._generate_title(state.get("input", ""))
 
-                if agent_message_id:
-                    logger.info("Agent response stored in Works", message_id=agent_message_id)
+            # Check if conversation exists, if not create it
+            try:
+                existing_conv = await supabase_client.client.table("conversations").select("id").eq("id", conversation_id).execute()
+
+                if not existing_conv.data or len(existing_conv.data) == 0:
+                    # Create new conversation entry
+                    await supabase_client.client.table("conversations").insert({
+                        "id": conversation_id,
+                        "user_id": user_id,
+                        "title": conversation_title,
+                        "message_count": 0,
+                        "agents_involved": [state.get("agent_used", "system")],
+                        "created_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat()
+                    }).execute()
+                    logger.info("Conversation created in Works", conversation_id=conversation_id, title=conversation_title)
+            except Exception as e:
+                logger.error("Failed to create conversation", error=str(e))
+
+            # Store user message
+            user_message_id = await memory_service.store_message(
+                conversation_id=conversation_id,
+                role="user",
+                content=state.get("input", ""),
+                metadata={
+                    "session_id": state.get("session_id"),
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                create_embedding=True
+            )
+
+            if user_message_id:
+                logger.info("User message stored in Works", message_id=user_message_id)
+
+            # Store agent response
+            agent_message_id = await memory_service.store_message(
+                conversation_id=conversation_id,
+                role=state.get("agent_used", "system"),
+                content=state.get("final_output", ""),
+                metadata={
+                    "processing_time_ms": state.get("processing_time_ms"),
+                    "tokens_used": state.get("tokens_used", 0),
+                    "cost_eur": state.get("cost_eur", 0.0),
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                create_embedding=True
+            )
+
+            if agent_message_id:
+                logger.info("Agent response stored in Works", message_id=agent_message_id)
+
+            # Update conversation message_count
+            try:
+                await supabase_client.client.table("conversations").update({
+                    "message_count": 2,  # user + agent
+                    "updated_at": datetime.utcnow().isoformat()
+                }).eq("id", conversation_id).execute()
+            except Exception as e:
+                logger.error("Failed to update conversation count", error=str(e))
 
             # ========== ARCHIVES (CONDITIONAL) ==========
             # Only create note in Archives if create_note tool was used OR explicit user request
