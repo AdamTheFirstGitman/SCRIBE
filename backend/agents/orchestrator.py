@@ -5,6 +5,7 @@ Main workflow coordinator that routes between agents
 
 import asyncio
 import time
+import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -661,10 +662,11 @@ class PlumeOrchestrator:
 
             # Filter messages for HTML display (filter_for_ui already imported at top)
             filtered_discussion = [
-                {'name': m['agent'].title(), 'content': filter_for_ui(m['message'])}
+                {'name': m['agent'].title(), 'content': filter_for_ui(m['agent'], m['message'])['content']}
                 for m in discussion_history
             ]
-            filtered_final_response = filter_for_ui(final_response)
+            # Use 'system' as agent for final response
+            filtered_final_response = filter_for_ui('system', final_response)['content']
 
             state["final_html"] = autogen_discussion._generate_discussion_html_v4(
                 filtered_discussion,
