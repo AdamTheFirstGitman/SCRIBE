@@ -35,15 +35,16 @@ class MessageFilter:
         r'\[FunctionExecutionResult\(.*?\)\]',
         r'FunctionCall\(.*?\)',
         r'FunctionExecutionResult\(.*?\)',
-        # Python dicts from tool returns (common patterns)
-        r'\{\s*[\'"]success[\'"]\s*:\s*\w+.*?\}',
-        r'\{\s*[\'"]results[\'"]\s*:\s*\[.*?\].*?\}',
-        r'\{\s*[\'"]error[\'"]\s*:\s*.*?\}',
-        r'\{\s*[\'"]count[\'"]\s*:\s*\d+.*?\}',
-        r'\{\s*[\'"]note_id[\'"]\s*:\s*.*?\}',
-        r'\{\s*[\'"]title[\'"]\s*:\s*.*?\}',
-        # Multiline dicts (greedy match for complex nested structures)
-        r'\{[\'"]success[\'"]:\s*\w+,.*?\}',
+        # Python dicts - AGGRESSIVE matching (must be last, most permissive)
+        # Match: , {'key': 'value', ...} or {'key': ...} at start of line/message
+        r',?\s*\{[\'"][a-z_]+[\'"]:\s*[^\}]+\}',  # Simple single-line dicts
+        r'\{\s*[\'"]success[\'"]\s*:.+?\}',       # success dicts (multiline)
+        r'\{\s*[\'"]results[\'"]\s*:.+?\}',       # results dicts (multiline)
+        r'\{\s*[\'"]content[\'"]\s*:.+?\}',       # content dicts (multiline)
+        r'\{\s*[\'"]error[\'"]\s*:.+?\}',         # error dicts
+        r'\{\s*[\'"]count[\'"]\s*:.+?\}',         # count dicts
+        r'\{\s*[\'"]note_id[\'"]\s*:.+?\}',       # note_id dicts
+        r'\{\s*[\'"]title[\'"]\s*:.+?\}',         # title dicts
     ]
 
     @classmethod
