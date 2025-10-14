@@ -144,6 +144,7 @@ function HomePage() {
                   id: `complete-${Date.now()}`,
                   role: result.agent_used || 'plume',
                   content: result.response,
+                  html: result.html,  // HTML enrichi du backend (discussion avec icons/tools filtrés)
                   timestamp: new Date(),
                   metadata: {
                     processing_time: result.processing_time_ms,

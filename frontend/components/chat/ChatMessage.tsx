@@ -99,9 +99,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
             )}
 
             {/* Message content */}
-            <p className="text-sm whitespace-pre-wrap">
-              {message.content}
-            </p>
+            {message.html ? (
+              <div
+                className="text-sm prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: message.html }}
+              />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">
+                {message.content}
+              </p>
+            )}
 
             {/* Clickable objects */}
             {message.metadata?.clickable_objects && message.metadata.clickable_objects.length > 0 && (

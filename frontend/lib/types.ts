@@ -26,6 +26,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'plume' | 'mimir'
   content: string
+  html?: string  // HTML enrichi pour mode discussion (avec icons, tool activities, etc.)
   timestamp: Date
   metadata?: MessageMetadata
 }
