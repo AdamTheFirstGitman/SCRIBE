@@ -281,7 +281,7 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             source = ""
 
             if hasattr(message, 'content'):
-                content = self._extract_text_content(message.content).strip()
+                content = str(message.content).strip()
             elif hasattr(message, 'text'):
                 content = str(message.text).strip()
             elif isinstance(message, dict):
@@ -302,49 +302,13 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
         if not final_response and messages:
             last_msg = messages[-1]
             if hasattr(last_msg, 'content'):
-                final_response = self._extract_text_content(last_msg.content)
+                final_response = str(last_msg.content)
             elif isinstance(last_msg, dict):
                 final_response = last_msg.get('content', 'Aucune réponse disponible.')
             else:
                 final_response = "Aucune réponse disponible."
 
         return final_response
-
-    def _extract_text_content(self, msg_content) -> str:
-        """
-        Extract only text content from AutoGen v0.4 message.content
-        Filters out FunctionCall and FunctionExecutionResult objects.
-
-        msg.content can be:
-        - str (simple text)
-        - list of objects (TextMessage, FunctionCall, FunctionExecutionResult)
-        - single object
-
-        Returns only the text content from TextMessage objects.
-        """
-        if isinstance(msg_content, str):
-            return msg_content
-
-        if isinstance(msg_content, list):
-            text_parts = []
-            for item in msg_content:
-                item_type = type(item).__name__
-                # Skip FunctionCall and FunctionExecutionResult
-                if 'FunctionCall' in item_type or 'FunctionExecutionResult' in item_type:
-                    continue
-                # Extract text from TextMessage or similar
-                if hasattr(item, 'text'):
-                    text_parts.append(str(item.text))
-                elif isinstance(item, str):
-                    text_parts.append(item)
-            return ' '.join(text_parts).strip()
-
-        # Single object - try to extract text
-        if hasattr(msg_content, 'text'):
-            return str(msg_content.text)
-
-        # Fallback to string conversion
-        return str(msg_content)
 
     def _format_messages_v4(self, messages: List) -> List[Dict[str, Any]]:
         """Format AutoGen v0.4 discussion messages for storage"""
@@ -355,7 +319,7 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             source = ""
 
             if hasattr(msg, 'content'):
-                content = self._extract_text_content(msg.content)
+                content = str(msg.content)
             elif hasattr(msg, 'text'):
                 content = str(msg.text)
             elif isinstance(msg, dict):
@@ -394,7 +358,7 @@ Travaillez ensemble pour fournir une réponse complète et précise."""
             source = ""
 
             if hasattr(msg, 'content'):
-                content = self._extract_text_content(msg.content)
+                content = str(msg.content)
             elif isinstance(msg, dict):
                 content = msg.get('content', '')
 
