@@ -232,10 +232,12 @@ Terminal 3: Dako Debug (Smart search + debug_auto)
 - `OPENAI_API_KEY` (Whisper + embeddings)
 - `REDIS_URL` (cache performance)
 - `JWT_SECRET` + `SECRET_KEY` (sécurité - 64 chars minimum)
+- `CORS_ORIGINS` (⚠️ **CRITIQUE** - doit inclure frontend URL production)
 
 **Frontend :**
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_API_URL` (⚠️ **CRITIQUE** - URL backend production, doit être définie au BUILD TIME sur Render)
 
 **Optionnelles :**
 - `PERPLEXITY_API_KEY` (recherche temps réel)
@@ -254,10 +256,21 @@ cd database && python test_connection.py
 ```
 
 ### Production (Render.com)
-- **Backend :** scribe-api.onrender.com (privé)
+- **Backend :** scribe-api-uj22.onrender.com (privé)
 - **Frontend :** scribe-frontend-qk6s.onrender.com (public)
 - **Database :** Supabase Pro
 - **Cache :** Redis Cloud (optionnel)
+
+**⚠️ Configuration CORS Production (CRITIQUE) :**
+```bash
+# Backend Render Dashboard → Environment Variables
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://scribe-frontend-qk6s.onrender.com
+
+# Frontend Render Dashboard → Environment Variables
+NEXT_PUBLIC_API_URL=https://scribe-api-uj22.onrender.com
+```
+
+**Note :** `NEXT_PUBLIC_*` variables DOIVENT être définies sur Render Dashboard (pas `.env.production` qui est gitignored). Elles sont embeddées dans le bundle JS au BUILD TIME.
 
 ---
 
@@ -362,10 +375,16 @@ cd database && python test_connection.py
 - **RAG Config :** `CHAP1/agents/AGENTS_RAG_CONFIG.md`
 
 **Status Production :**
-- 🚀 Backend LIVE : scribe-api.onrender.com
+- 🚀 Backend LIVE : scribe-api-uj22.onrender.com
 - 🚀 Frontend LIVE : scribe-frontend-qk6s.onrender.com
-- ✅ 15+ issues debug résolues méthodiquement
+- ✅ 16+ issues debug résolues méthodiquement
 - 📚 Protocols documentés pour futurs projets
+
+**Issues Critique Résolue (14/10/2025) :**
+- ❌ **Problème :** "Failed to fetch" sur Archives - CORS policy bloquait requêtes frontend→backend
+- 🔍 **Diagnostic :** Backend renvoyait 200 OK mais navigateur bloquait (pas de `Access-Control-Allow-Origin` header)
+- ✅ **Solution :** Ajout `CORS_ORIGINS=https://scribe-frontend-qk6s.onrender.com` dans env vars backend Render
+- 📝 **Leçon :** TOUJOURS configurer CORS_ORIGINS avec frontend URL production (pas juste localhost)
 
 ---
 
