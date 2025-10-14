@@ -20,7 +20,7 @@ class Note(BaseModel):
     id: str
     title: str
     text_content: str
-    html_content: str
+    html_content: Optional[str] = None  # Can be null in DB
     created_at: datetime
     updated_at: datetime
 
