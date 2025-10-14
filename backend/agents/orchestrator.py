@@ -23,6 +23,7 @@ from services.intent_classifier import intent_classifier
 from services.memory_service import memory_service
 from utils.logger import get_agent_logger, get_logger
 from utils.message_filter import filter_for_ui, filter_tool_for_ui, should_create_archive_note
+from utils.tool_message_formatter import format_tool_activity_for_ui
 from config import settings
 
 logger = get_logger(__name__)
@@ -660,13 +661,28 @@ class PlumeOrchestrator:
             state["discussion_history"] = discussion_history
             state["final_output"] = final_response
 
-            # Filter messages for HTML display (filter_for_ui already imported at top)
-            filtered_discussion = [
-                {'name': m['agent'].title(), 'content': filter_for_ui(m['agent'], m['message'])['content']}
-                for m in discussion_history
-            ]
-            # Use 'system' as agent for final response
-            filtered_final_response = filter_for_ui('system', final_response)['content']
+            # Filter messages for HTML display
+            # Step 1: Replace tool calls with fixed UI phrases (deterministic)
+            # Step 2: Apply additional filtering (keywords, condensing)
+            filtered_discussion = []
+            for m in discussion_history:
+                agent = m['agent']
+                message = m['message']
+
+                # Replace tool calls with UI-friendly phrases
+                cleaned_message = format_tool_activity_for_ui(message, agent)
+
+                # Apply standard filtering (keywords, etc.)
+                filtered_msg = filter_for_ui(agent, cleaned_message)
+
+                filtered_discussion.append({
+                    'name': agent.title(),
+                    'content': filtered_msg['content']
+                })
+
+            # Filter final response
+            cleaned_final = format_tool_activity_for_ui(final_response, 'system')
+            filtered_final_response = filter_for_ui('system', cleaned_final)['content']
 
             state["final_html"] = autogen_discussion._generate_discussion_html_v4(
                 filtered_discussion,
