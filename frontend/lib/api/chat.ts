@@ -3,7 +3,7 @@
  * Handles communication with Plume and Mimir agents
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8000'
 
 export type Agent = 'plume' | 'mimir'
 export type MessageRole = 'user' | 'plume' | 'mimir'
