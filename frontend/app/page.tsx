@@ -150,7 +150,8 @@ function HomePage() {
                     processing_time: result.processing_time_ms,
                     tokens_used: result.tokens_used,
                     cost_eur: result.cost_eur,
-                    clickable_objects: result.metadata?.clickable_objects
+                    clickable_objects: result.metadata?.clickable_objects,
+                    ui_metadata: result.ui_metadata  // User-friendly metadata (processing_time, context_info, sources)
                   }
                 }]
               }

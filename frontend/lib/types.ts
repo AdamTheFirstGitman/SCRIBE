@@ -15,11 +15,23 @@ export interface ClickableObject {
   url?: string
 }
 
+export interface UiMetadata {
+  processing_time?: string        // "⏱️ Réponse en 2s"
+  context_info?: string           // "└─ 5 notes liées trouvées"
+  sources_found?: string          // "🔍 3 documents trouvés [Voir sources ↓]"
+  detailed_metrics?: {
+    tokens?: number
+    cost_eur?: number
+    processing_time_ms?: number
+  }
+}
+
 export interface MessageMetadata {
   clickable_objects?: ClickableObject[]
   processing_time?: number
   tokens_used?: number
   cost_eur?: number
+  ui_metadata?: UiMetadata        // User-friendly formatted metadata
 }
 
 export interface ChatMessage {

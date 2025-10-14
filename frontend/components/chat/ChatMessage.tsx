@@ -119,8 +119,23 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </div>
             )}
 
-            {/* Metadata (optional) */}
-            {message.metadata && (message.metadata.processing_time || message.metadata.tokens_used || message.metadata.cost_eur) && (
+            {/* User-friendly metadata from backend */}
+            {message.metadata?.ui_metadata && (
+              <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400 mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                {message.metadata.ui_metadata.processing_time && (
+                  <span>{message.metadata.ui_metadata.processing_time}</span>
+                )}
+                {message.metadata.ui_metadata.context_info && (
+                  <span className="ml-2">{message.metadata.ui_metadata.context_info}</span>
+                )}
+                {message.metadata.ui_metadata.sources_found && (
+                  <span>{message.metadata.ui_metadata.sources_found}</span>
+                )}
+              </div>
+            )}
+
+            {/* Fallback: Technical metadata (if no ui_metadata) */}
+            {!message.metadata?.ui_metadata && message.metadata && (message.metadata.processing_time || message.metadata.tokens_used || message.metadata.cost_eur) && (
               <div className="flex gap-3 text-xs text-gray-500 mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
                 {message.metadata.processing_time && (
                   <span>{message.metadata.processing_time}ms</span>
