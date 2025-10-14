@@ -659,8 +659,7 @@ class PlumeOrchestrator:
             state["discussion_history"] = discussion_history
             state["final_output"] = final_response
 
-            # Filter messages for HTML display
-            from utils.message_filter import filter_for_ui
+            # Filter messages for HTML display (filter_for_ui already imported at top)
             filtered_discussion = [
                 {'name': m['agent'].title(), 'content': filter_for_ui(m['message'])}
                 for m in discussion_history
