@@ -84,6 +84,7 @@ class OrchestratedChatResponse(BaseModel):
     cost_eur: float
     errors: List[Dict[str, Any]] = Field(default_factory=list)
     warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    ui_metadata: Dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime
 
 # WebSocket connection manager
@@ -276,6 +277,7 @@ async def chat_orchestrated(request: OrchestratedChatRequest, fastapi_request: R
             cost_eur=result["cost_eur"],
             errors=result.get("errors", []),
             warnings=result.get("warnings", []),
+            ui_metadata=result.get("ui_metadata", {}),
             timestamp=datetime.now()
         )
 

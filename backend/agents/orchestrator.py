@@ -1221,7 +1221,8 @@ class PlumeOrchestrator:
                 "cost_eur": final_state.get("cost_eur", 0.0),
                 "errors": final_state.get("errors", []),
                 "warnings": final_state.get("warnings", []),
-                "metadata": final_state.get("metadata", {})  # Phase 2.2: include metadata with clickable objects
+                "metadata": final_state.get("metadata", {}),  # Phase 2.2: include metadata with clickable objects
+                "ui_metadata": final_state.get("ui_metadata", {})  # User-friendly formatted metadata
             }
 
         except Exception as e:
