@@ -54,6 +54,11 @@ export function AgentAction({ agent, actionText, status }: AgentActionProps) {
             <span className="animate-pulse delay-200">.</span>
           </span>
         )}
+
+        {/* Checkmark for completed status */}
+        {status === 'completed' && (
+          <span className="ml-1 text-green-500">✓</span>
+        )}
       </div>
     </div>
   )
