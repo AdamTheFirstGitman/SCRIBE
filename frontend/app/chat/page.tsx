@@ -306,10 +306,8 @@ export default function ChatPage() {
           // Clear tool activities immediately
           setCurrentToolActivities(new Map())
 
-          // Keep agent actions visible for 2 seconds after completion
-          setTimeout(() => {
-            setAgentActions([])
-          }, 2000)
+          // Keep agent actions visible permanently (user wants history)
+          // Don't clear agentActions
         },
         // onError
         (error) => {
@@ -323,10 +321,8 @@ export default function ChatPage() {
           // Clear tool activities immediately
           setCurrentToolActivities(new Map())
 
-          // Clear agent actions after delay (user should see what failed)
-          setTimeout(() => {
-            setAgentActions([])
-          }, 3000)
+          // Keep agent actions visible (user wants to see what failed)
+          // Don't clear agentActions
         }
       )
     } catch (error) {
@@ -338,10 +334,8 @@ export default function ChatPage() {
       setIsLoading(false)
       setCurrentToolActivities(new Map())
 
-      // Clear agent actions after delay
-      setTimeout(() => {
-        setAgentActions([])
-      }, 3000)
+      // Keep agent actions visible (user wants to see error context)
+      // Don't clear agentActions
     }
   }
 
