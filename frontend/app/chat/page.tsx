@@ -181,10 +181,7 @@ export default function ChatPage() {
         },
         // onMessage: Handle SSE events
         (event: SSEMessage) => {
-          console.log('🔍 SSE Event reçu:', event)  // DEBUG
-
           if (event.type === 'agent_action' && event.agent && event.action) {
-            console.log('✅ Agent action détecté:', event)  // DEBUG
             // NEW: Agent action notification (WhatsApp-style)
             // Translate technical action name to French UI text
             const actionText = TOOL_ACTION_TEXT[event.action] || event.action
@@ -194,11 +191,7 @@ export default function ChatPage() {
               status: event.status as 'running' | 'completed',
               timestamp: new Date()
             }
-            console.log('📝 Action ajoutée au state:', action)  // DEBUG
-            setAgentActions(prev => {
-              console.log('🔄 agentActions state update:', [...prev, action])  // DEBUG
-              return [...prev, action]
-            })
+            setAgentActions(prev => [...prev, action])
           } else if (event.type === 'tool_activity' && event.tool) {
             // Backend envoie tool activities FILTRÉES (badges UI-friendly)
             // Format: { tool, label, status, summary, timestamp }
@@ -301,9 +294,13 @@ export default function ChatPage() {
 
           setMessages(prev => [...prev, ...finalMessages])
 
-          // Clear tool activities and agent actions
+          // Clear tool activities immediately
           setCurrentToolActivities(new Map())
-          setAgentActions([])
+
+          // Keep agent actions visible for 2 seconds after completion
+          setTimeout(() => {
+            setAgentActions([])
+          }, 2000)
         },
         // onError
         (error) => {
@@ -314,9 +311,13 @@ export default function ChatPage() {
           // Remove loading message
           setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
 
-          // Clear tool activities and agent actions
+          // Clear tool activities immediately
           setCurrentToolActivities(new Map())
-          setAgentActions([])
+
+          // Clear agent actions after delay (user should see what failed)
+          setTimeout(() => {
+            setAgentActions([])
+          }, 3000)
         }
       )
     } catch (error) {
@@ -327,7 +328,11 @@ export default function ChatPage() {
       setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
       setIsLoading(false)
       setCurrentToolActivities(new Map())
-      setAgentActions([])
+
+      // Clear agent actions after delay
+      setTimeout(() => {
+        setAgentActions([])
+      }, 3000)
     }
   }
 
@@ -410,13 +415,9 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* DEBUG: Log agentActions avant render */}
-          {console.log('🎨 Rendering with agentActions:', agentActions)}
-
           {/* Agent Actions (WhatsApp-style notifications) */}
           {agentActions.length > 0 && (
             <div className="space-y-2">
-              {console.log('✨ Rendering', agentActions.length, 'agent actions')}
               {agentActions.map((action, idx) => (
                 <AgentAction key={`action-${idx}`} {...action} />
               ))}
