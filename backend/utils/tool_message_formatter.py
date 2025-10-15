@@ -86,9 +86,11 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
         r'\{\s*[\'"]results[\'"]\s*:.+?\}',
         r'\{\s*[\'"]error[\'"]\s*:.+?\}',
         r'\{\s*[\'"]count[\'"]\s*:.+?\}',
-        r'\{\s*[\'"]note_id[\'"]\s*:.+?\}',
-        r'\{\s*[\'"]title[\'"]\s*:.+?\}',
+        r'\{\s*[\'"]note_id[\'"]\s*:[^\}]+\}',  # Match note_id dicts (avoid greedy)
+        r'\{\s*[\'"]title[\'"]\s*:[^\}]+\}',    # Match title dicts (avoid greedy)
         r'\{\s*[\'"]content[\'"]\s*:.+?\}',
+        r'\{\s*[\'"]created_at[\'"]\s*:[^\}]+\}',  # Match created_at timestamps
+        r'\{\s*[\'"]confidence[\'"]\s*:[^\}]+\}',  # Match confidence scores
         # Catch remaining dicts with common structure
         r',?\s*\{[\'"][a-z_]+[\'"]\s*:.+?\}',
     ]
@@ -98,8 +100,9 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
 
     # Second pass: Remove leftover dict fragments like ], 'key': value}
     fragment_patterns = [
-        r'\],?\s*[\'"][a-z_]+[\'"]\s*:.+?\}',  # ], 'count': 2, 'confidence': 0.58}
-        r',\s*[\'"][a-z_]+[\'"]\s*:.+?\}',     # , 'count': 2}
+        r'\],?\s*[\'"][a-z_]+[\'"]\s*:[^\}]+\}',  # ], 'count': 2, 'confidence': 0.58}
+        r',\s*[\'"][a-z_]+[\'"]\s*:[^\}]+\}',     # , 'count': 2}
+        r'\]\s*,\s*[\'"][a-z_]+[\'"]\s*:[^\}]+\}', # Specific case from logs
     ]
 
     for pattern in fragment_patterns:

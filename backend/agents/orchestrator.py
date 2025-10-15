@@ -632,7 +632,15 @@ class PlumeOrchestrator:
                         })
 
                 # Extract final response
-                final_response = autogen_discussion._extract_final_response_v4(messages)
+                raw_final_response = autogen_discussion._extract_final_response_v4(messages)
+
+                # Clean final response IMMEDIATELY (Backend → Human Language)
+                cleaned_final = format_tool_activity_for_ui(raw_final_response, 'system')
+                final_response = filter_for_ui('system', cleaned_final)['content']
+
+                logger.debug("Final response cleaned",
+                           original_length=len(raw_final_response),
+                           cleaned_length=len(final_response))
 
                 # Calculate usage
                 total_tokens = autogen_discussion._estimate_tokens([
@@ -894,6 +902,23 @@ class PlumeOrchestrator:
         add_processing_step(state, "workflow_finalization")
 
         try:
+            # Clean final_output BEFORE finalization (Backend → Human Language)
+            if state.get("final_output"):
+                raw_output = state["final_output"]
+
+                # Step 1: Replace tool calls with UI phrases
+                cleaned = format_tool_activity_for_ui(raw_output, state.get("agent_used", "system"))
+
+                # Step 2: Apply standard filtering (keywords, dicts removal)
+                filtered = filter_for_ui(state.get("agent_used", "system"), cleaned)
+
+                # Step 3: Store human-friendly version
+                state["final_output"] = filtered["content"]
+
+                logger.debug("Final output cleaned for UI",
+                           original_length=len(raw_output),
+                           cleaned_length=len(filtered["content"]))
+
             # Finalize timing
             finalize_state(state)
 
