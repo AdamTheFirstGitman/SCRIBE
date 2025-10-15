@@ -557,10 +557,8 @@ class PlumeOrchestrator:
                         'timestamp': datetime.now().isoformat()
                     })
 
-                # Configure SSE queue context for tools (agent actions)
-                set_sse_queue(sse_queue)
-
                 # Run the group chat with retry on rate limit/overload
+                # Note: SSE queue already configured at workflow start (line 1267)
                 max_retries = 3
                 retry_delay = 2  # seconds
                 result = None
@@ -1261,6 +1259,10 @@ class PlumeOrchestrator:
 
         # Store SSE queue as instance variable (not in state to avoid msgpack serialization)
         self._current_sse_queue = _sse_queue
+
+        # Configure global SSE queue for tools (must be set BEFORE workflow starts)
+        # This allows AutoGen tools to emit agent_action events
+        set_sse_queue(_sse_queue)
 
         try:
             # Run the workflow
