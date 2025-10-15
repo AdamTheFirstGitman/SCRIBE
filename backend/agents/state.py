@@ -259,6 +259,10 @@ def finalize_state(state: AgentState) -> AgentState:
         duration = state["end_time"] - state["start_time"]
         state["processing_time_ms"] = duration.total_seconds() * 1000
 
+    # Generate UI-friendly metadata (human-readable vs technical)
+    from utils.ui_message_formatter import get_metrics_summary
+    state["ui_metadata"] = get_metrics_summary(state)
+
     return state
 
 def get_state_summary(state: AgentState) -> Dict[str, Any]:

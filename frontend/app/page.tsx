@@ -144,14 +144,13 @@ function HomePage() {
                   id: `complete-${Date.now()}`,
                   role: result.agent_used || 'plume',
                   content: result.response,
-                  html: result.html,  // HTML enrichi du backend (discussion avec icons/tools filtrés)
                   timestamp: new Date(),
                   metadata: {
                     processing_time: result.processing_time_ms,
                     tokens_used: result.tokens_used,
                     cost_eur: result.cost_eur,
                     clickable_objects: result.metadata?.clickable_objects,
-                    ui_metadata: result.ui_metadata  // User-friendly metadata (processing_time, context_info, sources)
+                    ui_metadata: result.ui_metadata
                   }
                 }]
               }
