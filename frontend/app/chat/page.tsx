@@ -424,13 +424,12 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Agent Actions (WhatsApp-style notifications) */}
-          {console.log('[DEBUG] Rendering - agentActions.length:', agentActions.length, agentActions)}
           {agentActions.length > 0 && (
             <div className="space-y-2">
-              {console.log('[DEBUG] Rendering AgentAction components')}
-              {agentActions.map((action, idx) => (
-                <AgentAction key={`action-${idx}`} {...action} />
-              ))}
+              {agentActions.map((action, idx) => {
+                console.log('[DEBUG] Rendering AgentAction:', action)
+                return <AgentAction key={`action-${idx}`} {...action} />
+              })}
             </div>
           )}
 
