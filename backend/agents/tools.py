@@ -8,6 +8,7 @@ from services.rag import rag_service
 from services.rag_service import get_rag_service
 from services.storage import supabase_client
 from utils.logger import get_logger
+from agents.sse_context import emit_agent_action
 
 logger = get_logger(__name__)
 
@@ -48,6 +49,15 @@ async def search_knowledge(
     try:
         logger.info("Tool search_knowledge called", query=query, limit=limit)
 
+        # SSE: Event START
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="search_knowledge",
+            status="running",
+            details=f"Recherche dans les archives : {query[:50]}...",
+            metadata={"query": query, "limit": limit}
+        )
+
         results = await rag_service.search_knowledge(
             query=query,
             limit=limit,
@@ -55,6 +65,15 @@ async def search_knowledge(
         )
 
         logger.info("Tool search_knowledge completed", results_found=len(results))
+
+        # SSE: Event COMPLETED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="search_knowledge",
+            status="completed",
+            details=f"{len(results)} résultat(s) trouvé(s)",
+            metadata={"results_count": len(results)}
+        )
 
         return {
             "success": True,
@@ -64,6 +83,16 @@ async def search_knowledge(
         }
     except Exception as e:
         logger.error("Tool search_knowledge failed", error=str(e))
+
+        # SSE: Event FAILED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="search_knowledge",
+            status="failed",
+            details=f"Erreur : {str(e)[:100]}",
+            metadata={"error": str(e)}
+        )
+
         return {
             "success": False,
             "error": str(e),
@@ -104,6 +133,15 @@ async def web_search(
     try:
         logger.info("Tool web_search called", query=query, max_results=max_results)
 
+        # SSE: Event START
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="web_search",
+            status="running",
+            details=f"Recherche sur le web : {query[:50]}...",
+            metadata={"query": query, "max_results": max_results}
+        )
+
         # Utilise AdvancedRAGService avec web search activé
         rag_context = await web_rag_service.search(
             query=query,
@@ -113,6 +151,15 @@ async def web_search(
         )
 
         logger.info("Tool web_search completed", results_found=rag_context.total_results)
+
+        # SSE: Event COMPLETED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="web_search",
+            status="completed",
+            details=f"{rag_context.total_results} source(s) trouvée(s)",
+            metadata={"results_count": rag_context.total_results}
+        )
 
         return {
             "success": True,
@@ -132,6 +179,16 @@ async def web_search(
         }
     except Exception as e:
         logger.error("Tool web_search failed", error=str(e))
+
+        # SSE: Event FAILED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="web_search",
+            status="failed",
+            details=f"Erreur : {str(e)[:100]}",
+            metadata={"error": str(e)}
+        )
+
         return {
             "success": False,
             "error": str(e),
@@ -162,12 +219,30 @@ async def get_related_content(
     try:
         logger.info("Tool get_related_content called", note_id=note_id, limit=limit)
 
+        # SSE: Event START
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="get_related_content",
+            status="running",
+            details=f"Recherche de contenus similaires...",
+            metadata={"note_id": note_id, "limit": limit}
+        )
+
         results = await rag_service.get_related_content(
             note_id=note_id,
             limit=limit
         )
 
         logger.info("Tool get_related_content completed", results_found=len(results))
+
+        # SSE: Event COMPLETED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="get_related_content",
+            status="completed",
+            details=f"{len(results)} contenu(s) similaire(s) trouvé(s)",
+            metadata={"results_count": len(results)}
+        )
 
         return {
             "success": True,
@@ -177,6 +252,16 @@ async def get_related_content(
         }
     except Exception as e:
         logger.error("Tool get_related_content failed", error=str(e))
+
+        # SSE: Event FAILED
+        await emit_agent_action(
+            agent_name="Mimir",
+            action="get_related_content",
+            status="failed",
+            details=f"Erreur : {str(e)[:100]}",
+            metadata={"error": str(e)}
+        )
+
         return {
             "success": False,
             "error": str(e),
@@ -218,6 +303,15 @@ async def create_note(
     try:
         logger.info("Tool create_note called", title=title[:50])
 
+        # SSE: Event START
+        await emit_agent_action(
+            agent_name="Plume",
+            action="create_note",
+            status="running",
+            details=f"Création de la note : {title[:50]}...",
+            metadata={"title": title}
+        )
+
         # Préparer les données de la note
         note_metadata = metadata or {}
         note_metadata["source"] = "plume_agent"  # Add source to metadata JSONB
@@ -234,6 +328,15 @@ async def create_note(
 
         logger.info("Tool create_note completed", note_id=note.get("id"))
 
+        # SSE: Event COMPLETED
+        await emit_agent_action(
+            agent_name="Plume",
+            action="create_note",
+            status="completed",
+            details=f"Note créée : {title}",
+            metadata={"note_id": note.get("id"), "title": title}
+        )
+
         return {
             "success": True,
             "note_id": note.get("id"),
@@ -242,6 +345,16 @@ async def create_note(
         }
     except Exception as e:
         logger.error("Tool create_note failed", error=str(e))
+
+        # SSE: Event FAILED
+        await emit_agent_action(
+            agent_name="Plume",
+            action="create_note",
+            status="failed",
+            details=f"Erreur : {str(e)[:100]}",
+            metadata={"error": str(e)}
+        )
+
         return {
             "success": False,
             "error": str(e),
@@ -275,6 +388,15 @@ async def update_note(
     try:
         logger.info("Tool update_note called", note_id=note_id)
 
+        # SSE: Event START
+        await emit_agent_action(
+            agent_name="Plume",
+            action="update_note",
+            status="running",
+            details=f"Mise à jour de la note...",
+            metadata={"note_id": note_id}
+        )
+
         # Préparer les données de mise à jour
         update_data = {}
         if content is not None:
@@ -289,6 +411,16 @@ async def update_note(
 
         if note:
             logger.info("Tool update_note completed", note_id=note_id)
+
+            # SSE: Event COMPLETED
+            await emit_agent_action(
+                agent_name="Plume",
+                action="update_note",
+                status="completed",
+                details=f"Note mise à jour : {note.get('title', 'Sans titre')}",
+                metadata={"note_id": note_id, "title": note.get("title")}
+            )
+
             return {
                 "success": True,
                 "note_id": note.get("id"),
@@ -296,6 +428,15 @@ async def update_note(
                 "updated_at": note.get("updated_at")
             }
         else:
+            # SSE: Event FAILED
+            await emit_agent_action(
+                agent_name="Plume",
+                action="update_note",
+                status="failed",
+                details="Note introuvable",
+                metadata={"note_id": note_id}
+            )
+
             return {
                 "success": False,
                 "error": "Note not found",
@@ -303,6 +444,16 @@ async def update_note(
             }
     except Exception as e:
         logger.error("Tool update_note failed", error=str(e))
+
+        # SSE: Event FAILED
+        await emit_agent_action(
+            agent_name="Plume",
+            action="update_note",
+            status="failed",
+            details=f"Erreur : {str(e)[:100]}",
+            metadata={"error": str(e)}
+        )
+
         return {
             "success": False,
             "error": str(e),

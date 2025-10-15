@@ -14,6 +14,7 @@ from langgraph.checkpoint.memory import MemorySaver
 # from langgraph.checkpoint.postgres import PostgresSaver  # TODO: Re-enable when implementing async context manager
 
 from agents.state import AgentState, add_processing_step, add_error, add_model_call, finalize_state
+from agents.sse_context import set_sse_queue
 from services.transcription import transcription_service
 from services.embeddings import embedding_service
 from services.rag import rag_service
@@ -555,6 +556,9 @@ class PlumeOrchestrator:
                         'status': 'started',
                         'timestamp': datetime.now().isoformat()
                     })
+
+                # Configure SSE queue context for tools (agent actions)
+                set_sse_queue(sse_queue)
 
                 # Run the group chat with retry on rate limit/overload
                 max_retries = 3
