@@ -49,20 +49,28 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
     cleaned = message_content
 
     # Step 0: Detect and clean FRAGMENTS of tool calls (partial FunctionCall without prefix)
-    # Pattern: name='tool_name', call_id='...', is_error=False)]
-    fragment_call_pattern = r'''(?:^|[,\s])name=['"]([a-z_]+)['"],\s*call_id=[^,\)]+(?:,\s*is_error=[^,\)]+)?[)\]]*'''
-    matches = re.finditer(fragment_call_pattern, cleaned, flags=re.IGNORECASE | re.DOTALL)
+    # Patterns:
+    # - name='tool_name', call_id='...', is_error=False)]
+    # - [...truncated...], name='update_note')]
+    # - Any text ending with name='tool')]
+    fragment_patterns_step0 = [
+        r'''(?:^|[,\s])name=['"]([a-z_]+)['"],\s*call_id=[^,\)]+(?:,\s*is_error=[^,\)]+)?[)\]]*''',  # Original
+        r'''\[?\.\.\..*?\]?,?\s*name=['"]([a-z_]+)['"]\s*[)\]]+''',  # [...], name='tool')]
+        r'''(?:.*?),\s*name=['"]([a-z_]+)['"]\s*[)\]]+$''',  # Anything ending with , name='tool')]
+    ]
 
-    for match in matches:
-        original = match.group(0)
-        tool_name = match.group(1)
+    for pattern in fragment_patterns_step0:
+        matches = re.finditer(pattern, cleaned, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
+        for match in matches:
+            original = match.group(0)
+            tool_name = match.group(1)
 
-        if tool_name and tool_name in TOOL_DISPLAY_MAP:
-            replacement = TOOL_DISPLAY_MAP[tool_name]
-            cleaned = cleaned.replace(original, replacement)
-        else:
-            # Unknown tool or fragment, remove completely
-            cleaned = cleaned.replace(original, '')
+            if tool_name and tool_name in TOOL_DISPLAY_MAP:
+                replacement = TOOL_DISPLAY_MAP[tool_name]
+                cleaned = cleaned.replace(original, replacement)
+            else:
+                # Unknown tool or fragment, remove completely
+                cleaned = cleaned.replace(original, '')
 
     # Step 1: Replace FunctionCall patterns
     function_call_pattern = r'\[?FunctionCall\([^)]+\)\]?'
