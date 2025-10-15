@@ -48,6 +48,22 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
     """
     cleaned = message_content
 
+    # Step 0: Detect and clean FRAGMENTS of tool calls (partial FunctionCall without prefix)
+    # Pattern: name='tool_name', call_id='...', is_error=False)]
+    fragment_call_pattern = r'''(?:^|[,\s])name=['"]([a-z_]+)['"],\s*call_id=[^,\)]+(?:,\s*is_error=[^,\)]+)?[)\]]*'''
+    matches = re.finditer(fragment_call_pattern, cleaned, flags=re.IGNORECASE | re.DOTALL)
+
+    for match in matches:
+        original = match.group(0)
+        tool_name = match.group(1)
+
+        if tool_name and tool_name in TOOL_DISPLAY_MAP:
+            replacement = TOOL_DISPLAY_MAP[tool_name]
+            cleaned = cleaned.replace(original, replacement)
+        else:
+            # Unknown tool or fragment, remove completely
+            cleaned = cleaned.replace(original, '')
+
     # Step 1: Replace FunctionCall patterns
     function_call_pattern = r'\[?FunctionCall\([^)]+\)\]?'
     matches = re.finditer(function_call_pattern, cleaned, flags=re.DOTALL)
@@ -109,10 +125,11 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
         cleaned = re.sub(pattern, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
 
     # Step 4: Clean up leftover artifacts
-    # Remove leading/trailing commas and whitespace
-    cleaned = re.sub(r'^\s*,\s*', '', cleaned)
-    cleaned = re.sub(r',\s*$', '', cleaned)
+    # Remove leading/trailing commas, quotes, and whitespace
+    cleaned = re.sub(r'^\s*[,"\'\s]+', '', cleaned)  # Leading artifacts
+    cleaned = re.sub(r'[,"\'\s]+$', '', cleaned)     # Trailing artifacts
     cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)  # Remove excessive newlines
+    cleaned = re.sub(r'^["\',\s]+', '', cleaned)     # Clean start again after all replacements
 
     return cleaned.strip()
 
@@ -120,26 +137,37 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
 def extract_tool_activities(message_content: str, agent_name: str) -> List[Dict[str, Any]]:
     """
     Extract structured tool activity data from message
-    Useful for Phase 2 when we want separate tool_activities array
+    Used to generate agent_action SSE events (WhatsApp-style notifications)
 
     Returns list of:
     {
         'agent': 'mimir',
         'tool': 'web_search',
-        'status': 'completed',
-        'display': '🌐 Exploration du web ✓'
+        'status': 'running' | 'completed',
+        'display': '🌐 Exploration du web...',
+        'action_text': 'recherche sur le web'  # For "Mimir recherche sur le web"
     }
     """
     activities = []
 
-    # Find all tool calls
+    # Tool name to action verb mapping (for "Agent <action_verb>")
+    TOOL_ACTION_VERBS = {
+        'search_knowledge': 'recherche dans les archives',
+        'web_search': 'recherche sur le web',
+        'create_note': 'a créé une note',
+        'update_note': 'a mis à jour une note',
+        'get_related_content': 'explore les contenus liés',
+    }
+
+    # Find all tool calls (including fragments)
     patterns = [
         (r'\[?FunctionCall\([^)]+name=[\'"]([a-z_]+)[\'"][^)]*\)\]?', 'running'),
-        (r'\[?FunctionExecutionResult\([^)]+name=[\'"]([a-z_]+)[\'"][^)]*\)\]?', 'completed')
+        (r'\[?FunctionExecutionResult\([^)]+name=[\'"]([a-z_]+)[\'"][^)]*\)\]?', 'completed'),
+        (r'''(?:^|[,\s])name=['"]([a-z_]+)['"],\s*call_id=[^,\)]+''', 'running'),  # Fragments
     ]
 
     for pattern, status in patterns:
-        matches = re.finditer(pattern, message_content, flags=re.DOTALL)
+        matches = re.finditer(pattern, message_content, flags=re.DOTALL | re.IGNORECASE)
         for match in matches:
             tool_name = match.group(1)
             if tool_name in TOOL_DISPLAY_MAP:
@@ -147,11 +175,43 @@ def extract_tool_activities(message_content: str, agent_name: str) -> List[Dict[
                 if status == 'completed':
                     display = display.replace('...', '✓')
 
-                activities.append({
-                    'agent': agent_name,
-                    'tool': tool_name,
-                    'status': status,
-                    'display': display
-                })
+                # Avoid duplicates (same tool might be matched by multiple patterns)
+                if not any(a['tool'] == tool_name and a['status'] == status for a in activities):
+                    activities.append({
+                        'agent': agent_name,
+                        'tool': tool_name,
+                        'status': status,
+                        'display': display,
+                        'action_text': TOOL_ACTION_VERBS.get(tool_name, f'utilise {tool_name}')
+                    })
 
     return activities
+
+
+def is_pure_tool_call(message_content: str) -> bool:
+    """
+    Check if message is ONLY a tool call (no human-readable content)
+    Used to determine if we should send agent_action instead of agent_message
+
+    Returns True if message contains ONLY:
+    - FunctionCall/FunctionExecutionResult patterns
+    - Python dicts
+    - Technical artifacts
+
+    Returns False if message contains natural language content
+    """
+    # Remove tool calls and dicts
+    cleaned = format_tool_activity_for_ui(message_content, '')
+
+    # If cleaned message is empty or very short, it was pure tool call
+    cleaned_stripped = cleaned.strip()
+
+    # Check if what remains is meaningful (more than just emoji or short artifact)
+    if len(cleaned_stripped) == 0:
+        return True
+
+    # If only emojis/symbols remain
+    if len(cleaned_stripped) < 5 and not any(c.isalpha() for c in cleaned_stripped):
+        return True
+
+    return False

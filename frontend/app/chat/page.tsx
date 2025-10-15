@@ -29,6 +29,7 @@ import {
   ToolActivity,
   AgentName
 } from '../../types/chat'
+import { AgentAction, AgentActionProps } from '../../components/chat/AgentAction'
 
 // Legacy types for getAgentInfo
 type Agent = 'plume' | 'mimir'
@@ -57,6 +58,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
   const [currentToolActivities, setCurrentToolActivities] = useState<Map<string, ToolActivity>>(new Map())
+  const [agentActions, setAgentActions] = useState<AgentActionProps[]>([])
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -170,7 +172,16 @@ export default function ChatPage() {
         },
         // onMessage: Handle SSE events
         (event: SSEMessage) => {
-          if (event.type === 'tool_activity' && event.tool) {
+          if (event.type === 'agent_action' && event.agent && event.action_text) {
+            // NEW: Agent action notification (WhatsApp-style)
+            const action: AgentActionProps = {
+              agent: event.agent as 'plume' | 'mimir',
+              actionText: event.action_text,
+              status: event.status as 'running' | 'completed',
+              timestamp: new Date()
+            }
+            setAgentActions(prev => [...prev, action])
+          } else if (event.type === 'tool_activity' && event.tool) {
             // Backend envoie tool activities FILTRÉES (badges UI-friendly)
             // Format: { tool, label, status, summary, timestamp }
             const activityId = `${event.tool}-${Date.now()}`
@@ -272,8 +283,9 @@ export default function ChatPage() {
 
           setMessages(prev => [...prev, ...finalMessages])
 
-          // Clear tool activities
+          // Clear tool activities and agent actions
           setCurrentToolActivities(new Map())
+          setAgentActions([])
         },
         // onError
         (error) => {
@@ -284,8 +296,9 @@ export default function ChatPage() {
           // Remove loading message
           setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
 
-          // Clear tool activities
+          // Clear tool activities and agent actions
           setCurrentToolActivities(new Map())
+          setAgentActions([])
         }
       )
     } catch (error) {
@@ -296,6 +309,7 @@ export default function ChatPage() {
       setMessages(prev => prev.filter(msg => msg.id !== loadingMessageId))
       setIsLoading(false)
       setCurrentToolActivities(new Map())
+      setAgentActions([])
     }
   }
 
@@ -378,6 +392,15 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
+          {/* Agent Actions (WhatsApp-style notifications) */}
+          {agentActions.length > 0 && (
+            <div className="space-y-2">
+              {agentActions.map((action, idx) => (
+                <AgentAction key={`action-${idx}`} {...action} />
+              ))}
+            </div>
+          )}
+
           {messages.map((message) => {
             const isUser = message.role === 'user'
             const agentInfo = !isUser ? getAgentInfo(message.role as Agent) : null

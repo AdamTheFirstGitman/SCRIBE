@@ -23,7 +23,7 @@ from services.intent_classifier import intent_classifier
 from services.memory_service import memory_service
 from utils.logger import get_agent_logger, get_logger
 from utils.message_filter import filter_for_ui, filter_tool_for_ui, should_create_archive_note
-from utils.tool_message_formatter import format_tool_activity_for_ui
+from utils.tool_message_formatter import format_tool_activity_for_ui, extract_tool_activities, is_pure_tool_call
 from config import settings
 
 logger = get_logger(__name__)
@@ -615,21 +615,38 @@ class PlumeOrchestrator:
                     }
                     discussion_history.append(message_data)
 
-                    # FILTER message for frontend UI (Layer 2)
-                    # Step 1: Replace tool calls with UI-friendly phrases (deterministic)
-                    cleaned_content = format_tool_activity_for_ui(content, source.lower())
-                    # Step 2: Apply standard filtering (keywords, condensing)
-                    filtered_msg = filter_for_ui(source.lower(), cleaned_content)
+                    # Detect if message is pure tool call (no natural language)
+                    if is_pure_tool_call(content):
+                        # Extract tool activities
+                        tool_activities = extract_tool_activities(content, source.lower())
 
-                    # Stream FILTERED message to SSE if queue exists
-                    if sse_queue:
-                        await sse_queue.put({
-                            'type': 'agent_message',
-                            'agent': filtered_msg['agent'],
-                            'content': filtered_msg['content'],
-                            'action_summary': filtered_msg.get('action_summary'),
-                            'timestamp': filtered_msg['timestamp']
-                        })
+                        # Send agent_action SSE events (WhatsApp-style notifications)
+                        if sse_queue and tool_activities:
+                            for activity in tool_activities:
+                                await sse_queue.put({
+                                    'type': 'agent_action',
+                                    'agent': activity['agent'],
+                                    'tool': activity['tool'],
+                                    'action_text': activity['action_text'],
+                                    'status': activity['status'],
+                                    'timestamp': datetime.now().isoformat()
+                                })
+                    else:
+                        # Message contains natural language → send as agent_message
+                        # Step 1: Replace tool calls with UI-friendly phrases (deterministic)
+                        cleaned_content = format_tool_activity_for_ui(content, source.lower())
+                        # Step 2: Apply standard filtering (keywords, condensing)
+                        filtered_msg = filter_for_ui(source.lower(), cleaned_content)
+
+                        # Stream FILTERED message to SSE if queue exists
+                        if sse_queue:
+                            await sse_queue.put({
+                                'type': 'agent_message',
+                                'agent': filtered_msg['agent'],
+                                'content': filtered_msg['content'],
+                                'action_summary': filtered_msg.get('action_summary'),
+                                'timestamp': filtered_msg['timestamp']
+                            })
 
                 # Extract final response
                 raw_final_response = autogen_discussion._extract_final_response_v4(messages)
