@@ -69,7 +69,10 @@ export default function ChatPage() {
   const [isOnline, setIsOnline] = useState(true)
   const [currentToolActivities, setCurrentToolActivities] = useState<Map<string, ToolActivity>>(new Map())
   const [agentActions, setAgentActions] = useState<AgentActionProps[]>(() => {
-    console.log('[INIT] agentActions state initialized - build 2025-10-15T13:00')
+    console.log('[INIT] agentActions state initialized - build 2025-10-15T14:05')
+    if (typeof window !== 'undefined') {
+      console.log('[INIT] Client-side initialization complete')
+    }
     return []
   })
 
