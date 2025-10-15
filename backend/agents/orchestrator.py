@@ -1303,6 +1303,8 @@ class PlumeOrchestrator:
         finally:
             # Clean up SSE queue reference
             self._current_sse_queue = None
+            # Clear global SSE queue
+            set_sse_queue(None)
 
 # Global orchestrator instance
 orchestrator = PlumeOrchestrator()

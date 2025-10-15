@@ -10,40 +10,40 @@ Architecture:
 - emit_agent_action() : Helper pour émettre les events SSE
 """
 
-from contextvars import ContextVar
 from typing import Optional, Any
 import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Context variable pour stocker la sse_queue
-_sse_queue_ctx: ContextVar[Optional[asyncio.Queue]] = ContextVar('sse_queue', default=None)
+# GLOBAL variable to store SSE queue (contextvars don't work with AutoGen threads)
+_global_sse_queue: Optional[asyncio.Queue] = None
 
 
 def set_sse_queue(queue: Optional[asyncio.Queue]) -> None:
     """
-    Définit la queue SSE dans le contexte async actuel.
+    Définit la queue SSE globalement.
 
     À appeler depuis l'orchestrator AVANT group_chat.run().
 
     Args:
         queue: La queue asyncio pour émettre les events SSE
     """
-    _sse_queue_ctx.set(queue)
-    logger.debug(f"SSE queue configured in context: {queue is not None}")
+    global _global_sse_queue
+    _global_sse_queue = queue
+    logger.debug(f"SSE queue configured globally: {queue is not None}")
 
 
 def get_sse_queue() -> Optional[asyncio.Queue]:
     """
-    Récupère la queue SSE depuis le contexte async actuel.
+    Récupère la queue SSE globale.
 
     À appeler depuis les tools pour émettre des events.
 
     Returns:
         La queue SSE si configurée, None sinon
     """
-    return _sse_queue_ctx.get()
+    return _global_sse_queue
 
 
 async def emit_agent_action(
