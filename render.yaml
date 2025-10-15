@@ -124,7 +124,7 @@ services:
 
       # API Backend
       - key: NEXT_PUBLIC_API_URL
-        value: https://scribe-api.onrender.com
+        value: https://scribe-api-uj22.onrender.com
 
       # Supabase Configuration
       - key: NEXT_PUBLIC_SUPABASE_URL
