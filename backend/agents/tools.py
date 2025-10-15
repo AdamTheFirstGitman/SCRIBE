@@ -51,7 +51,7 @@ async def search_knowledge(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="search_knowledge",
             status="running",
             details=f"Recherche dans les archives : {query[:50]}...",
@@ -68,7 +68,7 @@ async def search_knowledge(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="search_knowledge",
             status="completed",
             details=f"{len(results)} résultat(s) trouvé(s)",
@@ -86,7 +86,7 @@ async def search_knowledge(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="search_knowledge",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
@@ -135,7 +135,7 @@ async def web_search(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="web_search",
             status="running",
             details=f"Recherche sur le web : {query[:50]}...",
@@ -154,7 +154,7 @@ async def web_search(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="web_search",
             status="completed",
             details=f"{rag_context.total_results} source(s) trouvée(s)",
@@ -182,7 +182,7 @@ async def web_search(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="web_search",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
@@ -221,7 +221,7 @@ async def get_related_content(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="get_related_content",
             status="running",
             details=f"Recherche de contenus similaires...",
@@ -237,7 +237,7 @@ async def get_related_content(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="get_related_content",
             status="completed",
             details=f"{len(results)} contenu(s) similaire(s) trouvé(s)",
@@ -255,7 +255,7 @@ async def get_related_content(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
+            agent_name="mimir",
             action="get_related_content",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
@@ -305,7 +305,7 @@ async def create_note(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Plume",
+            agent_name="plume",
             action="create_note",
             status="running",
             details=f"Création de la note : {title[:50]}...",
@@ -330,7 +330,7 @@ async def create_note(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Plume",
+            agent_name="plume",
             action="create_note",
             status="completed",
             details=f"Note créée : {title}",
@@ -348,7 +348,7 @@ async def create_note(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Plume",
+            agent_name="plume",
             action="create_note",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
@@ -390,7 +390,7 @@ async def update_note(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Plume",
+            agent_name="plume",
             action="update_note",
             status="running",
             details=f"Mise à jour de la note...",
@@ -414,7 +414,7 @@ async def update_note(
 
             # SSE: Event COMPLETED
             await emit_agent_action(
-                agent_name="Plume",
+                agent_name="plume",
                 action="update_note",
                 status="completed",
                 details=f"Note mise à jour : {note.get('title', 'Sans titre')}",
@@ -430,7 +430,7 @@ async def update_note(
         else:
             # SSE: Event FAILED
             await emit_agent_action(
-                agent_name="Plume",
+                agent_name="plume",
                 action="update_note",
                 status="failed",
                 details="Note introuvable",
@@ -447,7 +447,7 @@ async def update_note(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Plume",
+            agent_name="plume",
             action="update_note",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",

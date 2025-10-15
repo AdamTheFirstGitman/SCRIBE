@@ -34,6 +34,15 @@ import { AgentAction, AgentActionProps } from '../../components/chat/AgentAction
 // Legacy types for getAgentInfo
 type Agent = 'plume' | 'mimir'
 
+// Mapping tool technique → phrase UI française
+const TOOL_ACTION_TEXT: Record<string, string> = {
+  'search_knowledge': 'recherche dans les archives',
+  'web_search': 'recherche sur le web',
+  'get_related_content': 'explore les contenus liés',
+  'create_note': 'a créé une note',
+  'update_note': 'a mis à jour une note'
+}
+
 export default function ChatPage() {
   const router = useRouter()
 
@@ -172,11 +181,13 @@ export default function ChatPage() {
         },
         // onMessage: Handle SSE events
         (event: SSEMessage) => {
-          if (event.type === 'agent_action' && event.agent && event.action_text) {
+          if (event.type === 'agent_action' && event.agent && event.action) {
             // NEW: Agent action notification (WhatsApp-style)
+            // Translate technical action name to French UI text
+            const actionText = TOOL_ACTION_TEXT[event.action] || event.action
             const action: AgentActionProps = {
               agent: event.agent as 'plume' | 'mimir',
-              actionText: event.action_text,
+              actionText: actionText,
               status: event.status as 'running' | 'completed',
               timestamp: new Date()
             }
