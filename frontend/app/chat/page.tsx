@@ -181,7 +181,10 @@ export default function ChatPage() {
         },
         // onMessage: Handle SSE events
         (event: SSEMessage) => {
+          console.log('[DEBUG] SSE Event:', event)
+
           if (event.type === 'agent_action' && event.agent && event.action) {
+            console.log('[DEBUG] Agent action detected!', event)
             // NEW: Agent action notification (WhatsApp-style)
             // Translate technical action name to French UI text
             const actionText = TOOL_ACTION_TEXT[event.action] || event.action
@@ -191,7 +194,12 @@ export default function ChatPage() {
               status: event.status as 'running' | 'completed',
               timestamp: new Date()
             }
-            setAgentActions(prev => [...prev, action])
+            console.log('[DEBUG] Adding action to state:', action)
+            setAgentActions(prev => {
+              const newState = [...prev, action]
+              console.log('[DEBUG] New agentActions state:', newState)
+              return newState
+            })
           } else if (event.type === 'tool_activity' && event.tool) {
             // Backend envoie tool activities FILTRÉES (badges UI-friendly)
             // Format: { tool, label, status, summary, timestamp }
@@ -416,8 +424,10 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Agent Actions (WhatsApp-style notifications) */}
+          {console.log('[DEBUG] Rendering - agentActions.length:', agentActions.length, agentActions)}
           {agentActions.length > 0 && (
             <div className="space-y-2">
+              {console.log('[DEBUG] Rendering AgentAction components')}
               {agentActions.map((action, idx) => (
                 <AgentAction key={`action-${idx}`} {...action} />
               ))}
