@@ -588,8 +588,19 @@ class PlumeOrchestrator:
                     content = ""
                     source = ""
 
+                    # Extract content, filtering out AutoGen internal objects (FunctionCall, FunctionExecutionResult)
                     if hasattr(msg, 'content'):
-                        content = str(msg.content)
+                        raw_content = msg.content
+                        if isinstance(raw_content, str):
+                            content = raw_content
+                        elif isinstance(raw_content, list):
+                            # AutoGen may return list of [str, FunctionCall, FunctionExecutionResult]
+                            # Keep only strings (natural language), discard tool objects
+                            text_parts = [item for item in raw_content if isinstance(item, str)]
+                            content = " ".join(text_parts)
+                        else:
+                            # Single non-string object (pure tool call) → empty string
+                            content = ""
                     elif hasattr(msg, 'text'):
                         content = str(msg.text)
                     elif isinstance(msg, dict):

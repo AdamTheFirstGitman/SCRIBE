@@ -73,7 +73,8 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
                 cleaned = cleaned.replace(original, '')
 
     # Step 1: Replace FunctionCall patterns
-    function_call_pattern = r'\[?FunctionCall\([^)]+\)\]?'
+    # Pattern must handle nested parentheses (e.g., arguments='{"key": "value"}')
+    function_call_pattern = r'\[?FunctionCall\(.*?\)\]?'
     matches = re.finditer(function_call_pattern, cleaned, flags=re.DOTALL)
 
     for match in matches:
@@ -88,20 +89,24 @@ def format_tool_activity_for_ui(message_content: str, agent_name: str = "") -> s
             cleaned = cleaned.replace(original, '')
 
     # Step 2: Replace FunctionExecutionResult patterns
-    execution_result_pattern = r'\[?FunctionExecutionResult\([^)]+\)\]?'
-    matches = re.finditer(execution_result_pattern, cleaned, flags=re.DOTALL)
+    # Must handle complex nested structures like:
+    # [FunctionExecutionResult(content="{'success': True, 'note_id': '...'}", name='create_note', call_id='...', is_error=False)]
+    # Strategy: Match entire FunctionExecutionResult including all nested content
+    execution_result_pattern = r'\[?FunctionExecutionResult\(.*?is_error=(?:True|False)\s*\)\]?'
+    matches = list(re.finditer(execution_result_pattern, cleaned, flags=re.DOTALL))
 
-    for match in matches:
+    # Process matches in reverse to avoid index shifting
+    for match in reversed(matches):
         original = match.group(0)
         tool_name = detect_tool_name(original)
 
         if tool_name and tool_name in TOOL_DISPLAY_MAP:
             # For execution results, show completed status
             replacement = TOOL_DISPLAY_MAP[tool_name].replace('...', '✓')
-            cleaned = cleaned.replace(original, replacement)
+            cleaned = cleaned.replace(original, replacement, 1)  # Replace only first occurrence
         else:
             # Unknown tool, remove completely
-            cleaned = cleaned.replace(original, '')
+            cleaned = cleaned.replace(original, '', 1)
 
     # Step 3: Remove Python dicts (aggressive cleaning)
     # First pass: Remove complete dicts
