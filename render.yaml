@@ -61,10 +61,7 @@ services:
       # - JWT_SECRET
       # - SECRET_KEY
       - key: CORS_ORIGINS
-        fromService:
-          type: web
-          name: scribe-frontend
-          property: host
+        value: http://localhost:3000,http://127.0.0.1:3000,https://scribe-frontend-qk6s.onrender.com
 
       # Performance
       - key: MAX_TOKENS_PLUME
