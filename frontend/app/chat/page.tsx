@@ -1,6 +1,6 @@
 'use client'
 
-// Force rebuild to include agent_action handlers - 2025-10-15
+// Force rebuild with CHECKPOINT logs - 2025-10-15T12:45
 import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '../../components/ui/button'
