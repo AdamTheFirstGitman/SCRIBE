@@ -420,11 +420,15 @@ export async function sendOrchestratedMessageStream(
             console.log('[DEBUG] SSE parsed message:', data)
 
             if (data.type === 'complete') {
+              console.log('[DEBUG] Calling onComplete')
               onComplete(data.result)
             } else if (data.type === 'error') {
+              console.log('[DEBUG] Calling onError')
               onError(new Error(data.error || 'Unknown error'))
             } else {
+              console.log('[DEBUG] Calling onMessage with type:', data.type)
               onMessage(data)
+              console.log('[DEBUG] onMessage called successfully')
             }
           } catch (e) {
             console.error('[ERROR] Failed to parse SSE message:', jsonStr, e)
