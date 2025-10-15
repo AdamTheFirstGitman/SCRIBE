@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bash scripts/prebuild.sh && next build",
     "start": "next start",
     "lint": "next lint",
     "clean": "rm -rf .next out node_modules/.cache"

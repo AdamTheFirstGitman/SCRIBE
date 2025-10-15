@@ -14,7 +14,13 @@ const nextConfig = {
   poweredByHeader: false,
 
   // Optimize production build
-  compress: true
+  compress: true,
+
+  // Generate unique build ID to prevent stale cache issues
+  generateBuildId: async () => {
+    // Use git commit hash + timestamp for cache busting
+    return `${process.env.RENDER_GIT_COMMIT || 'local'}-${Date.now()}`
+  }
 }
 
 module.exports = nextConfig
