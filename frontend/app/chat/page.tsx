@@ -68,7 +68,10 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
   const [currentToolActivities, setCurrentToolActivities] = useState<Map<string, ToolActivity>>(new Map())
-  const [agentActions, setAgentActions] = useState<AgentActionProps[]>([])
+  const [agentActions, setAgentActions] = useState<AgentActionProps[]>(() => {
+    console.log('[INIT] agentActions state initialized')
+    return []
+  })
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -185,22 +188,26 @@ export default function ChatPage() {
           console.log('[DEBUG] SSE Event:', event)
 
           if (event.type === 'agent_action' && event.agent && event.action) {
-            console.log('[DEBUG] Agent action detected!', event)
+            console.log('[🔥 CHECKPOINT 1] Agent action event received:', event)
             // NEW: Agent action notification (WhatsApp-style)
             // Translate technical action name to French UI text
             const actionText = TOOL_ACTION_TEXT[event.action] || event.action
+            console.log('[🔥 CHECKPOINT 2] Action text translated:', actionText)
             const action: AgentActionProps = {
               agent: event.agent as 'plume' | 'mimir',
               actionText: actionText,
               status: event.status as 'running' | 'completed',
               timestamp: new Date()
             }
-            console.log('[DEBUG] Adding action to state:', action)
+            console.log('[🔥 CHECKPOINT 3] Action object created:', action)
+            console.log('[🔥 CHECKPOINT 4] Calling setAgentActions...')
             setAgentActions(prev => {
+              console.log('[🔥 CHECKPOINT 5] Inside setAgentActions, prev:', prev)
               const newState = [...prev, action]
-              console.log('[DEBUG] New agentActions state:', newState)
+              console.log('[🔥 CHECKPOINT 6] New state computed:', newState)
               return newState
             })
+            console.log('[🔥 CHECKPOINT 7] setAgentActions called')
           } else if (event.type === 'tool_activity' && event.tool) {
             // Backend envoie tool activities FILTRÉES (badges UI-friendly)
             // Format: { tool, label, status, summary, timestamp }
@@ -419,14 +426,18 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Agent Actions (WhatsApp-style notifications) */}
-          {agentActions.length > 0 && (
-            <div className="space-y-2">
-              {agentActions.map((action, idx) => {
-                console.log('[DEBUG] Rendering AgentAction:', action)
-                return <AgentAction key={`action-${idx}`} {...action} />
-              })}
-            </div>
-          )}
+          {(() => {
+            console.log('[🔥 RENDER] agentActions.length:', agentActions.length)
+            console.log('[🔥 RENDER] agentActions:', agentActions)
+            return agentActions.length > 0 && (
+              <div className="space-y-2">
+                {agentActions.map((action, idx) => {
+                  console.log('[🔥 RENDER] Rendering AgentAction #', idx, action)
+                  return <AgentAction key={`action-${idx}`} {...action} />
+                })}
+              </div>
+            )
+          })()}
 
           {messages.map((message) => {
             const isUser = message.role === 'user'
