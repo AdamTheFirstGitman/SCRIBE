@@ -51,8 +51,8 @@ async def search_knowledge(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
-            action="search_knowledge",
+            agent_name="mimir",
+            action_text="recherche dans les archives",
             status="running",
             details=f"Recherche dans les archives : {query[:50]}...",
             metadata={"query": query, "limit": limit}
@@ -68,8 +68,8 @@ async def search_knowledge(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="search_knowledge",
+            agent_name="mimir",
+            action_text="recherche dans les archives",
             status="completed",
             details=f"{len(results)} résultat(s) trouvé(s)",
             metadata={"results_count": len(results)}
@@ -86,8 +86,8 @@ async def search_knowledge(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="search_knowledge",
+            agent_name="mimir",
+            action_text="recherche dans les archives",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
             metadata={"error": str(e)}
@@ -135,8 +135,8 @@ async def web_search(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
-            action="web_search",
+            agent_name="mimir",
+            action_text="recherche sur le web",
             status="running",
             details=f"Recherche sur le web : {query[:50]}...",
             metadata={"query": query, "max_results": max_results}
@@ -154,8 +154,8 @@ async def web_search(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="web_search",
+            agent_name="mimir",
+            action_text="recherche sur le web",
             status="completed",
             details=f"{rag_context.total_results} source(s) trouvée(s)",
             metadata={"results_count": rag_context.total_results}
@@ -182,8 +182,8 @@ async def web_search(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="web_search",
+            agent_name="mimir",
+            action_text="recherche sur le web",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
             metadata={"error": str(e)}
@@ -221,8 +221,8 @@ async def get_related_content(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Mimir",
-            action="get_related_content",
+            agent_name="mimir",
+            action_text="explore les contenus liés",
             status="running",
             details=f"Recherche de contenus similaires...",
             metadata={"note_id": note_id, "limit": limit}
@@ -237,8 +237,8 @@ async def get_related_content(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="get_related_content",
+            agent_name="mimir",
+            action_text="explore les contenus liés",
             status="completed",
             details=f"{len(results)} contenu(s) similaire(s) trouvé(s)",
             metadata={"results_count": len(results)}
@@ -255,8 +255,8 @@ async def get_related_content(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Mimir",
-            action="get_related_content",
+            agent_name="mimir",
+            action_text="explore les contenus liés",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
             metadata={"error": str(e)}
@@ -305,8 +305,8 @@ async def create_note(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Plume",
-            action="create_note",
+            agent_name="plume",
+            action_text="crée une note",
             status="running",
             details=f"Création de la note : {title[:50]}...",
             metadata={"title": title}
@@ -330,8 +330,8 @@ async def create_note(
 
         # SSE: Event COMPLETED
         await emit_agent_action(
-            agent_name="Plume",
-            action="create_note",
+            agent_name="plume",
+            action_text="a créé une note",
             status="completed",
             details=f"Note créée : {title}",
             metadata={"note_id": note.get("id"), "title": title}
@@ -348,8 +348,8 @@ async def create_note(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Plume",
-            action="create_note",
+            agent_name="plume",
+            action_text="crée une note",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
             metadata={"error": str(e)}
@@ -390,8 +390,8 @@ async def update_note(
 
         # SSE: Event START
         await emit_agent_action(
-            agent_name="Plume",
-            action="update_note",
+            agent_name="plume",
+            action_text="met à jour une note",
             status="running",
             details=f"Mise à jour de la note...",
             metadata={"note_id": note_id}
@@ -414,8 +414,8 @@ async def update_note(
 
             # SSE: Event COMPLETED
             await emit_agent_action(
-                agent_name="Plume",
-                action="update_note",
+                agent_name="plume",
+                action_text="a mis à jour une note",
                 status="completed",
                 details=f"Note mise à jour : {note.get('title', 'Sans titre')}",
                 metadata={"note_id": note_id, "title": note.get("title")}
@@ -430,8 +430,8 @@ async def update_note(
         else:
             # SSE: Event FAILED
             await emit_agent_action(
-                agent_name="Plume",
-                action="update_note",
+                agent_name="plume",
+                action_text="met à jour une note",
                 status="failed",
                 details="Note introuvable",
                 metadata={"note_id": note_id}
@@ -447,8 +447,8 @@ async def update_note(
 
         # SSE: Event FAILED
         await emit_agent_action(
-            agent_name="Plume",
-            action="update_note",
+            agent_name="plume",
+            action_text="met à jour une note",
             status="failed",
             details=f"Erreur : {str(e)[:100]}",
             metadata={"error": str(e)}

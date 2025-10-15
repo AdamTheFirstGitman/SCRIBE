@@ -48,7 +48,7 @@ def get_sse_queue() -> Optional[asyncio.Queue]:
 
 async def emit_agent_action(
     agent_name: str,
-    action: str,
+    action_text: str,
     status: str,
     details: Optional[str] = None,
     metadata: Optional[dict] = None
@@ -59,16 +59,16 @@ async def emit_agent_action(
     Cette fonction est fail-safe : elle ne crashe jamais si la queue n'est pas configurée.
 
     Args:
-        agent_name: Nom de l'agent (ex: "Mimir", "Plume")
-        action: Action effectuée (ex: "search_knowledge", "create_note")
+        agent_name: Nom de l'agent en lowercase (ex: "mimir", "plume")
+        action_text: Phrase action en français (ex: "recherche dans les archives", "a créé une note")
         status: État de l'action ("running", "completed", "failed")
         details: Détails additionnels optionnels
         metadata: Métadonnées additionnelles (ex: note_id, query, etc.)
 
     Example:
         await emit_agent_action(
-            agent_name="Mimir",
-            action="search_knowledge",
+            agent_name="mimir",
+            action_text="recherche dans les archives",
             status="running",
             details="Recherche dans les archives..."
         )
@@ -76,13 +76,16 @@ async def emit_agent_action(
     try:
         queue = get_sse_queue()
         if not queue:
-            logger.debug(f"No SSE queue configured, skipping event: {agent_name}.{action}")
+            logger.debug(f"No SSE queue configured, skipping event: {agent_name}.{action_text}")
             return
+
+        # Ensure agent_name is lowercase for frontend compatibility
+        agent_lowercase = agent_name.lower()
 
         event_data = {
             "type": "agent_action",
-            "agent": agent_name,
-            "action": action,
+            "agent": agent_lowercase,
+            "action_text": action_text,
             "status": status,
         }
 
@@ -93,8 +96,8 @@ async def emit_agent_action(
             event_data["metadata"] = metadata
 
         await queue.put(event_data)
-        logger.debug(f"SSE event emitted: {agent_name}.{action} [{status}]")
+        logger.debug(f"SSE event emitted: {agent_lowercase}.{action_text} [{status}]")
 
     except Exception as e:
         # Never crash - SSE events sont optionnels
-        logger.warning(f"Failed to emit SSE event {agent_name}.{action}: {e}")
+        logger.warning(f"Failed to emit SSE event {agent_name}.{action_text}: {e}")
