@@ -1,5 +1,6 @@
 'use client'
 
+// Force rebuild to include agent_action handlers - 2025-10-15
 import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '../../components/ui/button'
