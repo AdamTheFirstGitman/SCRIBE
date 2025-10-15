@@ -399,6 +399,7 @@ export async function sendOrchestratedMessageStream(
       if (done) break
 
       const chunk = decoder.decode(value, { stream: true })
+      console.log('[SSE] Chunk received:', chunk)
       buffer += chunk
       const lines = buffer.split('\n')
       buffer = lines.pop() || ''
@@ -406,20 +407,27 @@ export async function sendOrchestratedMessageStream(
       for (const line of lines) {
         if (line.trim() && line.startsWith('data: ')) {
           const jsonStr = line.slice(6)
+          console.log('[SSE] JSON string:', jsonStr)
 
           if (jsonStr === '[DONE]') {
+            console.log('[SSE] Stream done')
             return
           }
 
           try {
             const data: SSEMessage = JSON.parse(jsonStr)
+            console.log('[SSE] Parsed message:', data)
 
             if (data.type === 'complete') {
+              console.log('[SSE] Calling onComplete')
               onComplete(data.result)
             } else if (data.type === 'error') {
+              console.log('[SSE] Calling onError')
               onError(new Error(data.error || 'Unknown error'))
             } else {
+              console.log('[SSE] Calling onMessage with type:', data.type)
               onMessage(data)
+              console.log('[SSE] onMessage called successfully')
             }
           } catch (e) {
             console.error('[ERROR] Failed to parse SSE message:', jsonStr, e)
