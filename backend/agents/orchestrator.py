@@ -616,7 +616,10 @@ class PlumeOrchestrator:
                     discussion_history.append(message_data)
 
                     # FILTER message for frontend UI (Layer 2)
-                    filtered_msg = filter_for_ui(source.lower(), content)
+                    # Step 1: Replace tool calls with UI-friendly phrases (deterministic)
+                    cleaned_content = format_tool_activity_for_ui(content, source.lower())
+                    # Step 2: Apply standard filtering (keywords, condensing)
+                    filtered_msg = filter_for_ui(source.lower(), cleaned_content)
 
                     # Stream FILTERED message to SSE if queue exists
                     if sse_queue:
