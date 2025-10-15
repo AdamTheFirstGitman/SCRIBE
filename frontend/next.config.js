@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: false, // Temporarily disabled to force chunk regeneration
+  swcMinify: true,
 
   images: {
     domains: [
@@ -20,6 +20,30 @@ const nextConfig = {
   generateBuildId: async () => {
     // Use git commit hash + timestamp for cache busting
     return `${process.env.RENDER_GIT_COMMIT || 'local'}-${Date.now()}`
+  },
+
+  // CRITICAL: Configure headers to prevent Render CDN from caching HTML/JSON aggressively
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_next/data/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ]
   }
 }
 
