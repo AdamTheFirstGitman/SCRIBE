@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  swcMinify: false, // Temporarily disabled to force chunk regeneration
 
   images: {
     domains: [
