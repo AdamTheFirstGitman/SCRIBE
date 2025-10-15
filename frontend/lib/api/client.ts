@@ -144,16 +144,19 @@ export interface SSEMessage {
   params?: Record<string, any>
   result?: any
   error?: string
-  // NEW: Agent action fields (WhatsApp-style notifications)
-  action_text?: string  // Action text (e.g., "recherche dans les archives")
+  // Agent action fields (WhatsApp-style notifications)
+  action?: string  // Technical action name from backend (e.g., "search_knowledge", "create_note")
+  action_text?: string  // DEPRECATED: Legacy field, use action + frontend mapping instead
   // Filtered tool activity from backend (Layer 2)
   label?: string  // UI-friendly label (e.g., "🔍 Recherche archives")
   summary?: string  // UI-friendly summary (e.g., "5 résultats")
   status?: 'running' | 'completed' | 'failed'
+  details?: string  // Additional details from backend
   metadata?: {
     processing_time?: number
     tokens_used?: number
     cost_eur?: number
+    [key: string]: any  // Allow additional metadata fields
   }
 }
 
